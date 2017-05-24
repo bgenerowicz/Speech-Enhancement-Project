@@ -38,8 +38,8 @@ rmsarray = np.vstack(rms)
 
 #Create & Apply hanning window
 hanning_segment = np.hanning(rmsarray.shape[1])
-rmsarray_han = np.multiply(hanning_segment,rmsarray)
-
+#rmsarray_han = np.multiply(hanning_segment,rmsarray)
+rmsarray_han=rmsarray
 #FFT
 
 F_data = np.fft.fft(rmsarray_han)
@@ -81,6 +81,6 @@ for j in range(0, numframe):
 newdata = np.pad(newdata, (0, int(remainder)), 'constant')  # pad to subtract
 test = np.subtract(newdata, reconstruction)
 plt.plot(test)
-plt.show()
+plt.show
 
 end=1
