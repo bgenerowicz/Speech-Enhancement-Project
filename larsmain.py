@@ -10,8 +10,8 @@ fs = 16e3
 tsegment = 20e-3
 sseg = tsegment * fs
 
-import matplotlib
-matplotlib.use("Agg")
+#import matplotlib
+#matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
@@ -80,7 +80,7 @@ for j in range(0, numframe):
 
 newdata = np.pad(newdata, (0, int(remainder)), 'constant')  # pad to subtract
 test = np.subtract(newdata, reconstruction)
-plt.plot(test)
-plt.show
+plt.plot(reconstruction)
+plt.show()
 
 end=1
