@@ -4,7 +4,10 @@ import numpy as np
 fs = 16e3
 tsegment = 20e-3
 sseg = tsegment * fs
-
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 # plt.plot(cleandatarow)
 # plt.ylabel('some numbers')
