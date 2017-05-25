@@ -5,13 +5,14 @@
 
 import scipy.io
 import numpy as np
+import pylab
 
 fs = 16e3
 tsegment = 20e-3
 sseg = tsegment * fs
 
 import matplotlib
-matplotlib.use("Agg")
+#matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
@@ -79,8 +80,23 @@ for j in range(0, numframe):
 # plt.plot(newdata)
 
 newdata = np.pad(newdata, (0, int(remainder)), 'constant')  # pad to subtract
-test = np.subtract(newdata, reconstruction)
-plt.plot(test)
-plt.show
+residual = np.subtract(newdata, reconstruction)
+
+
+#Plots
+f, axarr = plt.subplots(3, sharex=True)
+axarr[2].plot(residual)
+axarr[2].set_title('Residual')
+pylab.ylim([-0.5, 0.5])
+axarr[1].plot(reconstruction)
+axarr[1].set_title('Reconstructed')
+axarr[0].plot(newdata)
+axarr[0].set_title('Original')
+
+plt.show()
+
+
+
+
 
 end=1
