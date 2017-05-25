@@ -23,6 +23,8 @@ import wave
 import soundfile as sf
 
 
+
+
 ###
 ## Read Data & Pad Data & Apply Window & FFT
 ###
@@ -50,8 +52,38 @@ F_data = np.fft.fft(rmsarray_han)
 
 
 
+###
+## MS Method
+###
+
+L=1500/tsegment #segment
+k=rmsarray_han.shape[1] #number of freq bins
+Qprev=np.array(np.zeros(k))
+R=rmsarray_han.shape[0]
+result=np.empty(k)
+
+for j in range(0, R-1):
+    fourier_row=np.fft.fft(rmsarray_han[j,:]) #take fourier of row
+    psd_row=np.absolute(fourier_row)**2 #psd of row
+    #psd_row[psd_row==0]=np.nan
+    #alpha=1/(1+(Qprev/psd_row-1)**2)
+    alpha = 0.5
+    onevector=np.array(np.ones(k)) #make onevector
+    Q = alpha*Qprev + (onevector-alpha) * psd_row
+    result=np.vstack((result,Q))
+    Qprev=Q
 
 ###
+## Add Noise
+###
+mean = 0
+std = 0.1
+num_samples = len(newdata)
+wgn = np.random.normal(mean, std, num_samples)
+data = newdata + wgn
+
+
+####
 ## Reconstruct Data
 ###
 
@@ -59,15 +91,6 @@ F_data = np.fft.fft(rmsarray_han)
 
 #IFFT
 IF_data = np.fft.ifft(F_data)
-
-
-#rmsshortend = rmsarray[1:rmsarray.shape[0], 160:320]  # take only the second half of all columns, rows: second to last
-#numframe = rmsshortend.shape[0]  # number of rows in cut matrix
-#reconstruction = rmsarray[0, :]  # take the whole first row, all columns
-
-#for j in range(0, numframe):
-#    reconstruction = np.hstack((reconstruction, rmsshortend[j, :]))  # add the halved rows
-
 
 
 rmsshortend = IF_data[1:IF_data.shape[0], 160:320]  # take only the second half of all columns, rows: second to last
@@ -78,64 +101,9 @@ for j in range(0, numframe):
     reconstruction = np.hstack((reconstruction, rmsshortend[j, :]))  # add the halved rows
 
 
-
-# plt.plot(newdata,reconstruction)
-# plt.plot(newdata)
-
 newdata = np.pad(newdata, (0, int(remainder)), 'constant',constant_values=0)  # pad to subtract
 residual = newdata-reconstruction
 
-#plt.plot(residual)
-#plt.show()
-
-#Plots
-# f, axarr = plt.subplots(3, sharex=True)
-# axarr[2].plot(residual)
-# axarr[2].set_title('Residual')
-# pylab.ylim([-0.5, 0.5])
-# axarr[1].plot(reconstruction)
-# axarr[1].set_title('Reconstructed')
-# axarr[0].plot(newdata)
-# axarr[0].set_title('Original')
-#
-# plt.show()
-
-
-#
-# f, axarr = plt.subplots(7, sharex=True)
-#
-# axarr[6].plot(np.absolute(residual))
-# axarr[6].set_title('Residual Absolute')
-#
-# axarr[5].plot(residual.real)
-# axarr[5].set_title('Residual Real')
-#
-# axarr[4].plot(residual.imag)
-# axarr[4].set_title('Residual Imag')
-#
-# axarr[3].plot(np.absolute(reconstruction))
-# axarr[3].set_title('Reconstructed Absolute')
-#
-# axarr[2].plot(reconstruction.real)
-# axarr[2].set_title('Reconstructed Real')
-# #pylab.ylim([-0.5, 0.5])
-# axarr[1].plot(reconstruction.imag)
-# axarr[1].set_title('Reconstructed Imag')
-#
-# axarr[0].plot(newdata)
-# axarr[0].set_title('Original')
-# plt.show()
-
 #sf.write('new_file.ogg', reconstruction.imag, samplerate)
-#sd.play(reconstruction.real, samplerate)
-
-f, Pxx_den = signal.periodogram(newdata[150000:166000], fs)
-plt.semilogy(f, Pxx_den)
-plt.ylim([1e-7, 1e2])
-plt.xlabel('frequency [Hz]')
-plt.ylabel('PSD [V**2/Hz]')
-plt.show()
-
-
 
 end=1
