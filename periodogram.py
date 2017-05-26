@@ -91,10 +91,15 @@ Per = np.empty([0,bins])
 Q=np.empty(bins)
 
 for j in range(0, numframe):
-    f, Psd = signal.periodogram(rmsarray[j,:], fs, 'hanning', 639)
+    f2, Psd = signal.periodogram(rmsarray[j,:], fs, 'hanning', 639)
     Per = np.vstack((Per, Psd))
     alpha =1/(1+(np.divide(Q, Psd)-1)**2)
     Q = alpha*Q + (np.ones(bins)-alpha)*Psd
+    plt.semilogy(f2, Psd)
+    plt.ylim([1e-7, 1e2])
+    plt.xlabel('frequency [Hz]')
+    plt.ylabel('PSD [V**2/Hz]')
+    plt.show()
 
 
 
