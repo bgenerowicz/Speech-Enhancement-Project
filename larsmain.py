@@ -1,3 +1,4 @@
+"# coding = utf-8"
 ####
 ##    SETUP
 ###
@@ -11,11 +12,9 @@ fs = 16e3
 tsegment = 20e-3
 sseg = tsegment * fs
 
-<<<<<<< HEAD
+
 #import matplotlib
-=======
-import matplotlib
->>>>>>> master
+
 #matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -66,10 +65,6 @@ IF_data = np.fft.ifft(F_data)
 #numframe = rmsshortend.shape[0]  # number of rows in cut matrix
 #reconstruction = rmsarray[0, :]  # take the whole first row, all columns
 
-#for j in range(0, numframe):
-#    reconstruction = np.hstack((reconstruction, rmsshortend[j, :]))  # add the halved rows
-
-
 
 rmsshortend = IF_data[1:IF_data.shape[0], 160:320]  # take only the second half of all columns, rows: second to last
 numframe = rmsshortend.shape[0]  # number of rows in cut matrix
@@ -84,12 +79,26 @@ for j in range(0, numframe):
 # plt.plot(newdata)
 
 newdata = np.pad(newdata, (0, int(remainder)), 'constant')  # pad to subtract
-<<<<<<< HEAD
+
 test = np.subtract(newdata, reconstruction)
 plt.plot(reconstruction)
 plt.show()
-=======
+
 residual = np.subtract(newdata, reconstruction)
+
+rec_real=reconstruction.real
+
+
+
+
+## Ex
+from scipy.io.wavfile import write
+write('rec.wav',16000,rec)
+
+import sounddevice as sd
+fs = 16000
+sd.play(rec, fs)
+
 
 
 #Plots
@@ -104,9 +113,5 @@ axarr[0].set_title('Original')
 
 plt.show()
 
-
-
-
->>>>>>> master
 
 end=1
