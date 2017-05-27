@@ -130,18 +130,8 @@ for j in range(0, R-1):
     gainmatrix=np.vstack((gainmatrix,gain))  #stack in matrix
 
 
+## TODO multiply F_data matrix with gainmatrix (elementwise)
 
-###
-<<<<<<< HEAD
-<<<<<<< HEAD
-## TODO multiply F_data matrix with gainmatrix elementwise
-=======
-## TODO multiply F_data matrix with gainmatrix (elementwise)
->>>>>>> master
-=======
-## TODO multiply F_data matrix with gainmatrix (elementwise)
->>>>>>> master
-##
 
 
 
