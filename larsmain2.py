@@ -45,7 +45,6 @@ newdata = newdata + wgn
 
 
 
-
 #Pad
 lastarr = len(rms) - 1  # take last array of the list
 length = len(rms[lastarr])  # calculate length of last array
@@ -53,14 +52,14 @@ remainder = sseg - (length % sseg)  # calculate length of padding
 rms[lastarr] = np.pad(rms[lastarr], (0, int(remainder)), 'constant',constant_values=0)  # pad
 rmsarray = np.vstack(rms)
 
-#Filter with Hanning window
 
 #Create & Apply hanning window
 hanning_segment = np.hanning(rmsarray.shape[1])
 #rmsarray_han = np.multiply(hanning_segment,rmsarray)
-rmsarray_han=rmsarray
-#FFT
+rmsarray_han=rmsarray #for testing
 
+
+#FFT
 F_data = np.fft.fft(rmsarray_han)
 
 
@@ -132,9 +131,8 @@ for j in range(0, R-1):
 
 
 
-
 ###
-## TODO multiply F_data vector with gain_vector
+## TODO multiply F_data matrix with gainmatrix (elementwise)
 ##
 
 
