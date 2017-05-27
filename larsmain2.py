@@ -133,7 +133,11 @@ for j in range(0, R-1):
 
 ###
 <<<<<<< HEAD
+<<<<<<< HEAD
 ## TODO multiply F_data matrix with gainmatrix elementwise
+=======
+## TODO multiply F_data matrix with gainmatrix (elementwise)
+>>>>>>> master
 =======
 ## TODO multiply F_data matrix with gainmatrix (elementwise)
 >>>>>>> master
