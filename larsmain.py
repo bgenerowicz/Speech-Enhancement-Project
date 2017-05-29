@@ -4,8 +4,11 @@
 
 
 import scipy.io
+from scipy import signal
 import numpy as np
 import pylab
+
+import sounddevice as sd
 
 fs = 16e3
 tsegment = 20e-3
@@ -32,7 +35,7 @@ rms = [block for block in sf.blocks('Audio/clean.wav', blocksize=320, overlap=16
 lastarr = len(rms) - 1  # take last array of the list
 length = len(rms[lastarr])  # calculate length of last array
 remainder = sseg - (length % sseg)  # calculate length of padding
-rms[lastarr] = np.pad(rms[lastarr], (0, int(remainder)), 'constant')  # pad
+rms[lastarr] = np.pad(rms[lastarr], (0, int(remainder)), 'constant',constant_values=0)  # pad
 rmsarray = np.vstack(rms)
 
 #Filter with Hanning window
@@ -79,23 +82,59 @@ for j in range(0, numframe):
 # plt.plot(newdata,reconstruction)
 # plt.plot(newdata)
 
-newdata = np.pad(newdata, (0, int(remainder)), 'constant')  # pad to subtract
-residual = np.subtract(newdata, reconstruction)
+newdata = np.pad(newdata, (0, int(remainder)), 'constant',constant_values=0)  # pad to subtract
+residual = newdata-reconstruction
 
+#plt.plot(residual)
+#plt.show()
 
 #Plots
-f, axarr = plt.subplots(3, sharex=True)
-axarr[2].plot(residual)
-axarr[2].set_title('Residual')
-pylab.ylim([-0.5, 0.5])
-axarr[1].plot(reconstruction)
-axarr[1].set_title('Reconstructed')
-axarr[0].plot(newdata)
-axarr[0].set_title('Original')
+# f, axarr = plt.subplots(3, sharex=True)
+# axarr[2].plot(residual)
+# axarr[2].set_title('Residual')
+# pylab.ylim([-0.5, 0.5])
+# axarr[1].plot(reconstruction)
+# axarr[1].set_title('Reconstructed')
+# axarr[0].plot(newdata)
+# axarr[0].set_title('Original')
+#
+# plt.show()
 
+
+#
+# f, axarr = plt.subplots(7, sharex=True)
+#
+# axarr[6].plot(np.absolute(residual))
+# axarr[6].set_title('Residual Absolute')
+#
+# axarr[5].plot(residual.real)
+# axarr[5].set_title('Residual Real')
+#
+# axarr[4].plot(residual.imag)
+# axarr[4].set_title('Residual Imag')
+#
+# axarr[3].plot(np.absolute(reconstruction))
+# axarr[3].set_title('Reconstructed Absolute')
+#
+# axarr[2].plot(reconstruction.real)
+# axarr[2].set_title('Reconstructed Real')
+# #pylab.ylim([-0.5, 0.5])
+# axarr[1].plot(reconstruction.imag)
+# axarr[1].set_title('Reconstructed Imag')
+#
+# axarr[0].plot(newdata)
+# axarr[0].set_title('Original')
+# plt.show()
+
+#sf.write('new_file.ogg', reconstruction.imag, samplerate)
+#sd.play(reconstruction.real, samplerate)
+
+f, Pxx_den = signal.periodogram(newdata[150000:166000], fs)
+plt.semilogy(f, Pxx_den)
+plt.ylim([1e-7, 1e2])
+plt.xlabel('frequency [Hz]')
+plt.ylabel('PSD [V**2/Hz]')
 plt.show()
-
-
 
 
 
