@@ -1,6 +1,7 @@
 import numpy as np
 def inverse_segment_overlap(x_array,len_data_extended,s_segment,s_overlap):
     new_frames = int(len_data_extended/ s_segment)
+    x_array = x_array.real
     # init matrix
     x_trunc = np.matrix(np.zeros([new_frames, s_segment]))
     for j in range(0, new_frames):

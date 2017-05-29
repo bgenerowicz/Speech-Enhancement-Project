@@ -36,15 +36,17 @@ data_extended = np.ravel(np.asmatrix(np.pad(data, (0, int(remainder)), 'constant
 data_seg_over = s_o.segment_overlap(data_extended,s_segment,s_overlap)
 
 
-#Create & Apply hanning window
-hanning_segment = np.hanning(data_seg_over.shape[1])
-data_han_seg_over = np.multiply(hanning_segment,data_seg_over)
+# #Create & Apply hanning window
+# hanning_segment = np.hanning(data_seg_over.shape[1])
+# data_han_seg_over = np.multiply(hanning_segment,data_seg_over)
 
 #FFT
 # data_han_seg_over = data_seg_over
-F_data = np.fft.fft(data_han_seg_over)
+F_data = np.fft.fft(data_seg_over) #F_data is 3611 by 320 where each 320 = 1 frame (l) and each 3611 = 1 frequency bin (k)
+
 
 #do stuff
+
 
 #IFFT
 IF_data = np.fft.ifft(F_data)
@@ -78,8 +80,8 @@ axarr[0].plot(data_extended)
 axarr[0].set_title('Original')
 
 
-from scipy.io.wavfile import write
-write('Audio/Saves/dirtyhan.wav',16000,reconstructed_data)
+# from scipy.io.wavfile import write
+# write('Audio/Saves/dirtyhan.wav',16000,reconstructed_data)
 
 
 print("--- %s seconds ---" % (time.time() - start_time))
