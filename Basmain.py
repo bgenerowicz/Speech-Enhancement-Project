@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import soundfile as sf
-from SingleMic import segment_overlap as s_o
-from SingleMic import inverse_segment_overlap as i_s_o
+import segment_overlap as s_o
+import inverse_segment_overlap as i_s_o
 import time
 import pylab
+
 
 start_time = time.time()
 
@@ -15,15 +16,23 @@ overlap = 0.5
 #Import data & fs
 data, fs = sf.read('Audio/clean.wav')
 
-# Calc
+# Add Noise
+# mean = 0
+# std = 0.05
+# num_samples = len(data)
+# wgn = np.random.normal(mean, std, num_samples)
+# data = data + wgn
+
+
+# Calculate segment and overlap
 s_segment = int(tsegment * fs)
 s_overlap = int(overlap * s_segment)
+
 # pad data with zeros
 remainder = s_segment - (len(data) % s_segment)
 data_extended = np.ravel(np.asmatrix(np.pad(data, (0, int(remainder)), 'constant')))
 
-
-#Segment & overlap the data
+#Segment and overlap data
 data_seg_over = s_o.segment_overlap(data_extended,s_segment,s_overlap)
 
 
@@ -32,11 +41,10 @@ hanning_segment = np.hanning(data_seg_over.shape[1])
 data_han_seg_over = np.multiply(hanning_segment,data_seg_over)
 
 #FFT
-data_han_seg_over = data_seg_over
+# data_han_seg_over = data_seg_over
 F_data = np.fft.fft(data_han_seg_over)
 
 #do stuff
-
 
 #IFFT
 IF_data = np.fft.ifft(F_data)
@@ -48,11 +56,11 @@ reconstructed_data = i_s_o.inverse_segment_overlap(IF_data_array,len(data_extend
 #Calculate Residual
 residual = data_extended - reconstructed_data
 
+
 #
 # transform back into array
 # x_array = np.ravel(x)
 # x_truncarray = i_s_o.inverse_segment_overlap(x_array,len(data_extended),s_segment,s_overlap)
-#
 #
 #
 # #calculate difference between initial and reconstructed signals
@@ -69,7 +77,10 @@ axarr[1].set_title('Reconstructed')
 axarr[0].plot(data_extended)
 axarr[0].set_title('Original')
 
-plt.show()
+
+from scipy.io.wavfile import write
+write('Audio/Saves/dirtyhan.wav',16000,reconstructed_data)
+
 
 print("--- %s seconds ---" % (time.time() - start_time))
 end = 1
