@@ -19,8 +19,8 @@ import matplotlib
 
 import matplotlib.pyplot as plt
 
-import wave
 import soundfile as sf
+import wave
 
 
 
