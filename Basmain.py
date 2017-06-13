@@ -1,75 +1,36 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import soundfile as sf
-from SingleMic import segment_overlap as s_o
-from SingleMic import inverse_segment_overlap as i_s_o
-import time
-import pylab
+import frame_data as f_d
+import import_data as i_d
+import transform_data as t_d
+import i_transform_data as i_t_d
+import overlap_add as o_a
+import make_plot as m_p
 
-start_time = time.time()
-
-#Variables
-tsegment = 20e-3 #20ms segment
+# Variables
+tsegment = 20e-3  # 20ms segment
 overlap = 0.5
 
-#Import data & fs
-data, fs = sf.read('Audio/clean.wav')
 
-# Calc
-s_segment = int(tsegment * fs)
+
+
+data, fs = i_d.import_data() #import data (possibly with noise)
+
+
+s_segment = int(tsegment * fs) # Calculate segment and overlap
 s_overlap = int(overlap * s_segment)
-# pad data with zeros
-remainder = s_segment - (len(data) % s_segment)
-data_extended = np.ravel(np.asmatrix(np.pad(data, (0, int(remainder)), 'constant')))
 
 
-#Segment & overlap the data
-data_seg_over = s_o.segment_overlap(data_extended,s_segment,s_overlap)
+framed_data = f_d.frame_data(data,fs,s_segment,s_overlap) #Frame data using hanning
+fft_data = t_d.transform_data(framed_data) #FFT of every segment
+##########
+#Do stuff#
+##########
+ifft_data = i_t_d.i_transform_data(fft_data) #inverse transform data
+reconstructed_data = o_a.overlap_add(ifft_data,len(data),s_segment, s_overlap) # Overlap & add
+m_p.make_plot(data,reconstructed_data) # Make plots
 
 
-#Create & Apply hanning window
-hanning_segment = np.hanning(data_seg_over.shape[1])
-data_han_seg_over = np.multiply(hanning_segment,data_seg_over)
+end =1
 
-#FFT
-data_han_seg_over = data_seg_over
-F_data = np.fft.fft(data_han_seg_over)
-
-#IFFT
-IF_data = np.fft.ifft(F_data)
-IF_data_array = np.ravel(IF_data)
-
-#Invert segmentation / overlap
-reconstructed_data = i_s_o.inverse_segment_overlap(IF_data_array,len(data_extended),s_segment,s_overlap)
-
-#Calculate Residual
-residual = data_extended - reconstructed_data
-
-#
-# transform back into array
-# x_array = np.ravel(x)
-# x_truncarray = i_s_o.inverse_segment_overlap(x_array,len(data_extended),s_segment,s_overlap)
-#
-#
-#
-# #calculate difference between initial and reconstructed signals
-
-
-
-#Plots
-# f, axarr = plt.subplots(3, sharex=True)
-# axarr[2].plot(residual)
-# axarr[2].set_title('Residual')
-# pylab.ylim([-0.5, 0.5])
-# axarr[1].plot(reconstructed_data)
-# axarr[1].set_title('Reconstructed')
-# axarr[0].plot(data_extended)
-# axarr[0].set_title('Original')
-#
-# plt.show()
-
-print("--- %s seconds ---" % (time.time() - start_time))
-end = 1
 
 
 
