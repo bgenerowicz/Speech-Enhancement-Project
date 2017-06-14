@@ -41,7 +41,7 @@ noisevariance=calculate_noisepsd_min(F_data,tsegment)
 ## TODO there are negative gains, where are they coming from?
 #
 
-speechpsd=calculate_speechpsd_heuristic(F_data)
+speechpsd=calculate_speechpsd_heuristic(F_data,noisevariance)
 wienergain=calculate_wiener_gain(speechpsd,noisevariance)
 
 

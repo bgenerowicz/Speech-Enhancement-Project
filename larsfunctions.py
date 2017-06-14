@@ -127,13 +127,12 @@ def calculate_noisepsd_min(F_data,tsegment):
     return noisevariance
 
 
-def calculate_speechpsd_heuristic(F_data):
+def calculate_speechpsd_heuristic(F_data,noisevariance):
     # Calculate Speech PSD with the Heuristic Approach of Lect.1+4
 
     k = F_data.shape[1]  # number of freq bins
     R = F_data.shape[0]
 
-    gainmatrix = np.empty(k)
     for j in range(0, R-1):
         fourier_row = F_data[j,:]  #take fourier of row
         psd_row=np.absolute(fourier_row)**2 #psd of row
@@ -144,8 +143,12 @@ def calculate_speechpsd_heuristic(F_data):
 
 def calculate_wiener_gain(speechpsd,noisevariance):
 
-    gain = speechpsd / (speechpsd + noisevariance[j, :])  # Wiener gain from lect.4
-    gain[np.isnan(gain)] = 0 #set gain to zero for emmpty frequency bins, this means we will drop these values
-    gainmatrix=np.vstack((gainmatrix,gain))  #stack in matrix
+    R = F_data.shape[0]
+
+    for j in range(0, R - 1):
+        gain = speechpsd / (speechpsd + noisevariance[j, :])  # Wiener gain from lect.4
+        gain[np.isnan(gain)] = 0 #set gain to zero for emmpty frequency bins, this means we will drop these values
+        gainmatrix=np.vstack((gainmatrix,gain))  #stack in matrix
+
 
     return gainmatrix
