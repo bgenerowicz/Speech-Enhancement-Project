@@ -29,9 +29,9 @@ def i_transform_data(F_data):
 
 
 
-def import_data():
+def import_data(filelocation):
     # Import data & fs
-    data, fs = sf.read('Audio/clean.wav')
+    data, fs = sf.read(filelocation)
 
     # Add Noise
     # mean = 0

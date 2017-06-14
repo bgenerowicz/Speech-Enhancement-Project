@@ -3,11 +3,11 @@ import bas_functions as b_f
 # Variables
 tsegment = 20e-3  # 20ms segment
 overlap = 0.5
+filelocation = 'Audio/clean.wav'
 
 
 
-
-data, fs = b_f.import_data() #import data (possibly with noise)
+data, fs = b_f.import_data(filelocation) #import data (possibly with noise)
 
 
 s_segment = int(tsegment * fs) # Calculate segment and overlap
