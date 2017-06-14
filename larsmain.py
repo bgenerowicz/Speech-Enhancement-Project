@@ -7,15 +7,12 @@ import matplotlib
 #matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import wave
-from larsfunctions import readaudio
 
+from larsfunctions import import_frame_data
+from larsfunctions import transform_data
 
-fs = 16e3
 tsegment = 20e-3
-sseg = tsegment * fs
 filelocation = 'Audio/clean.wav'
-
-
 
 
 
@@ -23,41 +20,12 @@ filelocation = 'Audio/clean.wav'
 ## Read Data & Pad Data & Apply Window & FFT
 ###
 
-#Read
-#filelocation = 'Audio/clean.wav'
-#newdata, samplerate = sf.read(filelocation)
-#rms = [block for block in sf.blocks('Audio/clean.wav', blocksize=320, overlap=160)]
 
-rmsarray_han=readaudio(filelocation)
+rmsarray_han,fs=import_frame_data(filelocation,tsegment)
+
+rmsarray_han=transform_data(rmsarray_han)
 
 
-###
-## Add Noise
-###
-mean = 0
-std = 0.2
-num_samples = len(newdata)
-wgn = np.random.normal(mean, std, num_samples)
-newdata = newdata + wgn
-
-
-
-#Pad
-lastarr = len(rms) - 1  # take last array of the list
-length = len(rms[lastarr])  # calculate length of last array
-remainder = sseg - (length % sseg)  # calculate length of padding
-rms[lastarr] = np.pad(rms[lastarr], (0, int(remainder)), 'constant',constant_values=0)  # pad
-rmsarray = np.vstack(rms)
-
-
-#Create & Apply hanning window
-hanning_segment = np.hanning(rmsarray.shape[1])
-#rmsarray_han = np.multiply(hanning_segment,rmsarray)
-rmsarray_han=rmsarray #for testing
-
-
-#FFT
-F_data = np.fft.fft(rmsarray_han)
 
 
 
