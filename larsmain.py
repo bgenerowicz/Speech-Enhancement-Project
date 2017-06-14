@@ -7,6 +7,7 @@ import matplotlib
 #matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import wave
+import time
 
 from larsfunctions import import_data
 from larsfunctions import import_frame_data
@@ -28,13 +29,17 @@ rmsarray_han,fs,remainder=import_frame_data(filelocation,tsegment)
 
 F_data=transform_data(rmsarray_han)
 
+start_time = time.time()
 noisevariance=calculate_noisepsd_min(F_data,tsegment,windowlength)
-
+print("--- %s seconds ---" % (time.time() - start_time))
 
 ##TODO there are negative gains, where are they coming from?
 
+
+
 speechpsd=calculate_speechpsd_heuristic(F_data,noisevariance)
 #wienergain=calculate_wiener_gain(speechpsd,noisevariance)
+
 
 
 ##TODO multiply F_data matrix with gainmatrix (elementwise)

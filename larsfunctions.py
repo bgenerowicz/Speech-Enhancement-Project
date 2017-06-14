@@ -112,10 +112,9 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
 
     numrows = noisevariance.shape[0]  # number of rows
 
-    for rowstart, rowend in zip(range(0, numrows - windowlength, windowlength),range(windowlength - 1, numrows, windowlength)):
+    for rowstart, rowend in zip(range(0, numrows - windowlength, 1),range(windowlength - 1, numrows, 1)):
         for k_column in range(0, noisevariance.shape[1]):
-            noisevariance[list(range(rowstart, rowend + 1)), k_column] = min(
-                noisevariance[list(range(rowstart, rowend + 1)), k_column])
+            noisevariance[list(range(rowstart, rowend + 1)), k_column] = min(noisevariance[list(range(rowstart, rowend + 1)), k_column])
             # Per Window (with length 'windowlength', which are number of rows):
             # Find the minimum per column and replace all the values in this column with the found minimum
 
