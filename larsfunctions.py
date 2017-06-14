@@ -74,7 +74,7 @@ def calculate_residual(filelocation,reconstruction,remainder):
     return residual
 
 
-def calculate_noisepsd_min(F_data,tsegment):
+def calculate_noisepsd_min(F_data,tsegment,windowlength):
 
 
     ###
@@ -87,7 +87,6 @@ def calculate_noisepsd_min(F_data,tsegment):
     Qprev = np.array(np.zeros(k))
     R = F_data.shape[0]
     noisevariance = np.empty(k)
-    gainmatrix = np.empty(k)
 
     for j in range(0, R - 1):
         fourier_row = F_data[j, :]  # load fourier of row
@@ -99,8 +98,7 @@ def calculate_noisepsd_min(F_data,tsegment):
         onevector = np.array(np.ones(k))  # make onevector
         Q = alpha * Qprev + (onevector - alpha) * psd_row  # hendricksbook: eq.(6.2)
 
-        Q[np.isnan(
-            Q)] = 0  # All nan values should be put to zero, otherwise the corresponding frequency bin values will be nan forever
+        Q[np.isnan(Q)] = 0  # All nan values should be put to zero, otherwise the corresponding frequency bin values will be nan forever
         # This also makes sense because Q=Qprev=0 means that in the next iteration Qprev will just not be taken into account
         # when calculating alpha
 
@@ -112,17 +110,14 @@ def calculate_noisepsd_min(F_data,tsegment):
     # and replaces all values in the column with the minimum psd. a simplied version of this procedure is in the first half of my
     # testing.py function
 
-    windowlength = int(1.5 / tsegment)  # segment in seconds to find minimum psd, respectively psd of noise
     numrows = noisevariance.shape[0]  # number of rows
 
-    for rowstart, rowend in zip(range(0, numrows - windowlength, windowlength),
-                                range(windowlength - 1, numrows, windowlength)):
+    for rowstart, rowend in zip(range(0, numrows - windowlength, windowlength),range(windowlength - 1, numrows, windowlength)):
         for k_column in range(0, noisevariance.shape[1]):
             noisevariance[list(range(rowstart, rowend + 1)), k_column] = min(
                 noisevariance[list(range(rowstart, rowend + 1)), k_column])
             # Per Window (with length 'windowlength', which are number of rows):
             # Find the minimum per column and replace all the values in this column with the found minimum
-
 
     return noisevariance
 
@@ -133,19 +128,26 @@ def calculate_speechpsd_heuristic(F_data,noisevariance):
     k = F_data.shape[1]  # number of freq bins
     R = F_data.shape[0]
 
+    speechpsdmatrix = np.empty(k)
+
     for j in range(0, R-1):
         fourier_row = F_data[j,:]  #take fourier of row
         psd_row=np.absolute(fourier_row)**2 #psd of row
         psd_row[psd_row == 0] = np.nan  # set nan to flag empty frequency bins
         speechpsd=psd_row-noisevariance[j,:] #simple formula from lect. 4
+        speechpsdmatrix=np.vstack((speechpsdmatrix,speechpsd))  #stack in matrix
 
-    return speechpsd
+    return speechpsdmatrix
+
 
 def calculate_wiener_gain(speechpsd,noisevariance):
 
-    R = F_data.shape[0]
+    k = speechpsd.shape[1]
+    R = speechpsd.shape[0]
+    gainmatrix = np.empty(k)
 
     for j in range(0, R - 1):
+        speechpsd[speechpsd == 0] = np.nan
         gain = speechpsd / (speechpsd + noisevariance[j, :])  # Wiener gain from lect.4
         gain[np.isnan(gain)] = 0 #set gain to zero for emmpty frequency bins, this means we will drop these values
         gainmatrix=np.vstack((gainmatrix,gain))  #stack in matrix

@@ -21,43 +21,28 @@ from larsfunctions import calculate_wiener_gain
 
 tsegment = 20e-3
 filelocation = 'Audio/clean.wav'
-
-
-
-###
-## Read Data & Pad Data & Apply Window & FFT
-###
+windowlength = int(1.5 / tsegment)  # segment in seconds to find minimum psd, respectively psd of noise
 
 newdata,_=import_data(filelocation)
 rmsarray_han,fs,remainder=import_frame_data(filelocation,tsegment)
 
 F_data=transform_data(rmsarray_han)
 
-noisevariance=calculate_noisepsd_min(F_data,tsegment)
+noisevariance=calculate_noisepsd_min(F_data,tsegment,windowlength)
 
 
-# ## Calculate Speech PSD with the Heuristic Approach of Lect.1+4
-## Calculate the Gain with the Wiener Formula
-## TODO there are negative gains, where are they coming from?
-#
+##TODO there are negative gains, where are they coming from?
 
 speechpsd=calculate_speechpsd_heuristic(F_data,noisevariance)
-wienergain=calculate_wiener_gain(speechpsd,noisevariance)
+#wienergain=calculate_wiener_gain(speechpsd,noisevariance)
 
 
-## TODO multiply F_data matrix with gainmatrix (elementwise)
+##TODO multiply F_data matrix with gainmatrix (elementwise)
 
 
-
-
-#IFFT
 IF_data = i_transform_data(F_data)
 
-####
-## Reconstruct Data
-
-
-
+##TODO change overlapp add (hanning)
 reconstruction = overlap_add(IF_data)
 residual = calculate_residual(filelocation,reconstruction,remainder)
 
