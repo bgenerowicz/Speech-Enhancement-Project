@@ -30,6 +30,7 @@ newdata,_=import_data(filelocation)
 rmsarray_han,fs,remainder=import_frame_data(filelocation,tsegment)
 
 F_data=transform_data(rmsarray_han)
+psd_F_data=np.absolute(F_data)**2
 F_data_bartlett=bas_bartlett(F_data) #Bartlett Estimate, is PSD now
 
 noisevariance=calculate_noisepsd_min(F_data_bartlett,tsegment,windowlength)
