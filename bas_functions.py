@@ -29,16 +29,17 @@ def i_transform_data(F_data):
 
 
 
-def import_data(filelocation):
+def import_data(filelocation,noise):
     # Import data & fs
     data, fs = sf.read(filelocation)
 
-    # Add Noise
-    # mean = 0
-    # std = 0.05
-    # num_samples = len(data)
-    # wgn = np.random.normal(mean, std, num_samples)
-    # data = data + wgn
+    if noise == 1:
+        #Add Noise
+        mean = 0
+        std = 0.05
+        num_samples = len(data)
+        wgn = np.random.normal(mean, std, num_samples)
+        data = data + wgn
 
     return data, fs
 
