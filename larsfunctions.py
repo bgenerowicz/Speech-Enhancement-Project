@@ -79,8 +79,6 @@ def calculate_residual(filelocation,reconstruction,remainder):
 def calculate_noisepsd_min(F_data,tsegment,windowlength):
     #F_data is PSD (Bartlett Estimate!)
 
-    #start_time = time.time()
-
     ###
     ## MS Method (Hendricks Book eq.(6.2) + Martin2001 paper in Dropbox)
     ###
@@ -90,7 +88,8 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
     k = F_data.shape[1]  # number of freq bins
     Qprev = np.array(np.zeros(k))
     R = F_data.shape[0]
-    noisevariance = np.empty(k)
+    #noisevariance=np.empty(k)
+    noisevariance = np.empty([R,k])
 
     for j in range(0, R - 1):
         #fourier_row = F_data[j, :]  # load fourier of row
@@ -109,14 +108,13 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
         # when calculating alpha
 
         Qprev = Q  # set previous value for next iteration
-        noisevariance = np.vstack((noisevariance, Q))  # write in matrix
+        #noisevariance = np.vstack((noisevariance, Q))  # write in matrix
+        noisevariance[j,:] = Q
 
-    #print("--- %s seconds for first loop---" % (time.time() - start_time))
 
     ##the following for loops (for loops ftw ;)) are moving windows with length windowlength. They find the minimum psd per frequency bin
     # and replaces all values in the column with the minimum psd. a simplied version of this procedure is in the first half of my
     # testing.py function
-    #start_time2 = time.time()
 
     numcols=noisevariance.shape[1] #number of columns
     numrows = noisevariance.shape[0]  # number of rows
@@ -127,9 +125,6 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
         noisevariance_minima[list(range(rowstart, rowend + 1)), 0:k+1] = np.amin(noisevariance[list(range(rowstart, rowend + 1)), :],axis=0)
             # Per Window (with length 'windowlength', which are number of rows):
             # Find the minimum per column and replace all the values in this column with the found minimum
-
-
-    #print("--- %s seconds for second loop---" % (time.time() - start_time2))
 
     return noisevariance_minima
 

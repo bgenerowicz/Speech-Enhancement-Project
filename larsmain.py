@@ -37,11 +37,11 @@ noisevariance=calculate_noisepsd_min(F_data,tsegment,windowlength)
 ##TODO there are negative gains, where are they coming from?
 
 
-
+start_time = time.time()
 speechpsd=calculate_speechpsd_heuristic(F_data,noisevariance)
 #wienergain=calculate_wiener_gain(speechpsd,noisevariance)
 
-
+print("--- %s seconds for main---" % (time.time() - start_time))
 
 ##TODO multiply F_data matrix with gainmatrix (elementwise)
 
