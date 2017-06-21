@@ -130,3 +130,14 @@ def signal_estimate(s_PSD_est,fft_data):
 def play_array(data,fs):
     data = data / max(data)
     sd.play(data,fs)
+
+def wiener(Py,Pn,y_k):
+    Py[Py == 0] = np.nan  # set nan to avoid division by zero
+
+
+    H = (1- Pn/Py) # Work out wiener gain
+
+    H[np.isnan(H)] = 0  #convert nans back to zeros
+    Sk_est = H*y_k
+
+    return Sk_est
