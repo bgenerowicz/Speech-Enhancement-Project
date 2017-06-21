@@ -69,7 +69,7 @@ def overlap_add(IF_data):
 def calculate_residual(filelocation,reconstruction,remainder):
 
     data, fs = sf.read(filelocation)
-    data = np.pad(data, (0, int(remainder)), 'constant', constant_values=0)  # pad to subtract
+    #data = np.pad(data, (0, int(remainder)), 'constant', constant_values=0)  # pad to subtract
 
     residual = data - reconstruction
 
