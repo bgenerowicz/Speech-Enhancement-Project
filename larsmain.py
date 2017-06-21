@@ -20,7 +20,7 @@ from larsfunctions import calculate_speechpsd_heuristic
 from larsfunctions import calculate_wiener_gain
 from larsfunctions import calculate_noisepsd_min_costas
 
-
+from bas_functions import bas_bartlett
 
 tsegment = 20e-3
 filelocation = 'Audio/clean.wav'
@@ -30,10 +30,9 @@ newdata,_=import_data(filelocation)
 rmsarray_han,fs,remainder=import_frame_data(filelocation,tsegment)
 
 F_data=transform_data(rmsarray_han)
+F_data=bas_bartlett(F_data) #Bartlett Estimate, is PSD now
 
-#start_time = time.time()
 noisevariance=calculate_noisepsd_min(F_data,tsegment,windowlength)
-#print("--- %s seconds ---" % (time.time() - start_time))
 
 ##TODO there are negative gains, where are they coming from?
 

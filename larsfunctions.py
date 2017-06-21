@@ -77,8 +77,9 @@ def calculate_residual(filelocation,reconstruction,remainder):
 
 
 def calculate_noisepsd_min(F_data,tsegment,windowlength):
+    #F_data is PSD (Bartlett Estimate!)
 
-    start_time = time.time()
+    #start_time = time.time()
 
     ###
     ## MS Method (Hendricks Book eq.(6.2) + Martin2001 paper in Dropbox)
@@ -92,8 +93,10 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
     noisevariance = np.empty(k)
 
     for j in range(0, R - 1):
-        fourier_row = F_data[j, :]  # load fourier of row
-        psd_row = np.absolute(fourier_row) ** 2  # psd of row
+        #fourier_row = F_data[j, :]  # load fourier of row
+        #psd_row = np.absolute(fourier_row) ** 2  # psd of row
+        psd_row = F_data[j,:]
+
         psd_row[psd_row == 0] = np.nan  # set nan to avoid division by zero
         alpha = 1 / (1 + (Qprev / psd_row - 1) ** 2)  # calculate alpha, see paper in dropbox
         #alpha = 0.85 #for testing
@@ -106,32 +109,27 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
         # when calculating alpha
 
         Qprev = Q  # set previous value for next iteration
-
         noisevariance = np.vstack((noisevariance, Q))  # write in matrix
-    print("--- %s seconds for first loop---" % (time.time() - start_time))
+
+    #print("--- %s seconds for first loop---" % (time.time() - start_time))
 
     ##the following for loops (for loops ftw ;)) are moving windows with length windowlength. They find the minimum psd per frequency bin
     # and replaces all values in the column with the minimum psd. a simplied version of this procedure is in the first half of my
     # testing.py function
-    start_time2 = time.time()
+    #start_time2 = time.time()
 
     numcols=noisevariance.shape[1] #number of columns
     numrows = noisevariance.shape[0]  # number of rows
 
     noisevariance_minima=copy.copy(noisevariance)
 
-    # for rowstart, rowend in zip(range(0, numrows - windowlength, 1),range(windowlength - 1, numrows, 1)):
-    #     for k_column in range(0, noisevariance.shape[1]):
-    #         noisevariance[list(range(rowstart, rowend + 1)), k_column] = min(noisevariance[list(range(rowstart, rowend + 1)), k_column])
-    #         # Per Window (with length 'windowlength', which are number of rows):
-    #         # Find the minimum per column and replace all the values in this column with the found minimum
     for rowstart, rowend in zip(range(0, numrows - windowlength, 1),range(windowlength - 1, numrows, 1)):
         noisevariance_minima[list(range(rowstart, rowend + 1)), 0:k+1] = np.amin(noisevariance[list(range(rowstart, rowend + 1)), :],axis=0)
             # Per Window (with length 'windowlength', which are number of rows):
             # Find the minimum per column and replace all the values in this column with the found minimum
 
 
-    print("--- %s seconds for second loop---" % (time.time() - start_time2))
+    #print("--- %s seconds for second loop---" % (time.time() - start_time2))
 
     return noisevariance_minima
 
