@@ -192,3 +192,11 @@ def calculate_noisepsd_min_costas(data_seg_over,tsegment,windowlength):
         psdN = np.vstack((psdN, Qmin))
 
     return psdN
+
+def wiener(Py,Pn,y_k):
+    Py[Py == 0] = np.nan
+    gain= 1-Pn/Py
+    gain[np.isnan(gain)] = 0
+    s_est=gain*y_k
+
+    return s_est, gain
