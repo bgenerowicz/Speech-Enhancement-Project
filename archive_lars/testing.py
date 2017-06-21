@@ -1,23 +1,24 @@
 import numpy as np
-
+import copy
 
 ### First half: demonstration of averaging with random values
 ##
 
-windowlength=5
-arrtosearch=np.random.rand(30,5)
+windowlength=3
+arrtosearch=np.random.rand(20,20)
+#arrtosearch = np.arange(64).reshape((8,8))
+#arrtosearchreduced = np.arange(64).reshape((8,8))
+k=arrtosearch.shape[1]
 numrows=arrtosearch.shape[0]
+arrtosearchreduced=copy.copy(arrtosearch)
 
-for rowstart,rowend in zip(range(0,numrows-windowlength,windowlength),range(windowlength-1,numrows,windowlength)):
-    print(rowstart)
-    print(rowend)
+for rowstart,rowend in zip(range(0,numrows-windowlength,1),range(windowlength-1,numrows,1)):
     #for k in range(0,arrtosearch.shape[1]):
-    arrtosearch[list(range(rowstart, rowend+1)), list(range(0, arrtosearch.shape[1]))] = min(arrtosearch[list(range(rowstart, rowend+1)), list(range(0, arrtosearch.shape[1]))])
-
+    #   arrtosearch[list(range(rowstart, rowend+1)), k] = min(arrtosearch[list(range(rowstart, rowend+1)), k])
+    arrtosearchreduced[list(range(rowstart, rowend+1)), 0:k+1] = np.amin( arrtosearch[list(range(rowstart, rowend+1)), :],axis=0)
 
 
 end=1
-
 
 
 ## 2nd half, Some not so important np.nan calculations

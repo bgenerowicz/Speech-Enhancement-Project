@@ -18,6 +18,8 @@ from larsfunctions import calculate_residual
 from larsfunctions import calculate_noisepsd_min
 from larsfunctions import calculate_speechpsd_heuristic
 from larsfunctions import calculate_wiener_gain
+from larsfunctions import calculate_noisepsd_min_costas
+
 
 
 tsegment = 20e-3
@@ -29,9 +31,9 @@ rmsarray_han,fs,remainder=import_frame_data(filelocation,tsegment)
 
 F_data=transform_data(rmsarray_han)
 
-start_time = time.time()
+#start_time = time.time()
 noisevariance=calculate_noisepsd_min(F_data,tsegment,windowlength)
-print("--- %s seconds ---" % (time.time() - start_time))
+#print("--- %s seconds ---" % (time.time() - start_time))
 
 ##TODO there are negative gains, where are they coming from?
 

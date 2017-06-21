@@ -1,5 +1,7 @@
 import soundfile as sf
 import numpy as np
+import time #to use timer
+import copy # to copy arrays, otherwise it will only be a reference
 
 
 def import_data(filelocation):
@@ -76,6 +78,7 @@ def calculate_residual(filelocation,reconstruction,remainder):
 
 def calculate_noisepsd_min(F_data,tsegment,windowlength):
 
+    start_time = time.time()
 
     ###
     ## MS Method (Hendricks Book eq.(6.2) + Martin2001 paper in Dropbox)
@@ -93,7 +96,7 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
         psd_row = np.absolute(fourier_row) ** 2  # psd of row
         psd_row[psd_row == 0] = np.nan  # set nan to avoid division by zero
         alpha = 1 / (1 + (Qprev / psd_row - 1) ** 2)  # calculate alpha, see paper in dropbox
-        # alpha = 0.85 #for testing
+        #alpha = 0.85 #for testing
 
         onevector = np.array(np.ones(k))  # make onevector
         Q = alpha * Qprev + (onevector - alpha) * psd_row  # hendricksbook: eq.(6.2)
@@ -105,20 +108,32 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
         Qprev = Q  # set previous value for next iteration
 
         noisevariance = np.vstack((noisevariance, Q))  # write in matrix
+    print("--- %s seconds for first loop---" % (time.time() - start_time))
 
     ##the following for loops (for loops ftw ;)) are moving windows with length windowlength. They find the minimum psd per frequency bin
     # and replaces all values in the column with the minimum psd. a simplied version of this procedure is in the first half of my
     # testing.py function
+    start_time2 = time.time()
 
+    numcols=noisevariance.shape[1] #number of columns
     numrows = noisevariance.shape[0]  # number of rows
 
+    noisevariance_minima=copy.copy(noisevariance)
+
+    # for rowstart, rowend in zip(range(0, numrows - windowlength, 1),range(windowlength - 1, numrows, 1)):
+    #     for k_column in range(0, noisevariance.shape[1]):
+    #         noisevariance[list(range(rowstart, rowend + 1)), k_column] = min(noisevariance[list(range(rowstart, rowend + 1)), k_column])
+    #         # Per Window (with length 'windowlength', which are number of rows):
+    #         # Find the minimum per column and replace all the values in this column with the found minimum
     for rowstart, rowend in zip(range(0, numrows - windowlength, 1),range(windowlength - 1, numrows, 1)):
-        for k_column in range(0, noisevariance.shape[1]):
-            noisevariance[list(range(rowstart, rowend + 1)), k_column] = min(noisevariance[list(range(rowstart, rowend + 1)), k_column])
+        noisevariance_minima[list(range(rowstart, rowend + 1)), 0:k+1] = np.amin(noisevariance[list(range(rowstart, rowend + 1)), :],axis=0)
             # Per Window (with length 'windowlength', which are number of rows):
             # Find the minimum per column and replace all the values in this column with the found minimum
 
-    return noisevariance
+
+    print("--- %s seconds for second loop---" % (time.time() - start_time2))
+
+    return noisevariance_minima
 
 
 def calculate_speechpsd_heuristic(F_data,noisevariance):
@@ -153,3 +168,34 @@ def calculate_wiener_gain(speechpsd,noisevariance):
 
 
     return gainmatrix
+
+def calculate_noisepsd_min_costas(data_seg_over,tsegment,windowlength):
+
+    alpha=.5
+    num_frames = data_seg_over.shape[0]
+    k = data_seg_over.shape[1]  # number of freq bins
+    Q = np.array(np.zeros(k))
+    Qtot = np.array(np.zeros(k))
+
+    for j in range(0, num_frames):
+        Seg = np.fft.fft(data_seg_over[j, :])  # FFT each frame
+        Seg[Seg == 0] = np.nan  # set nan to avoid division by zero
+        alpha = 1 / (1 + (Q / Seg - 1) ** 2)
+        psdY = np.absolute(Seg) ** 2  # periodogram of every frame
+        Qnew = alpha*Q + (1-alpha)*psdY
+        Qtot = np.vstack((Qtot, Qnew))
+        Qnew[np.isnan(Qnew)] = 0
+        Q = Qnew
+
+
+    Qtot = np.delete(Qtot, (0), axis=0)
+
+
+    L=100 # window from which the noise PSD is estimated [ for a 20msec frame -> L=2sec]
+    psdN = np.zeros((100, 320))
+
+    for i in range (L,num_frames):
+        Qmin = Qtot[range(i-L, i)].min(0)
+        psdN = np.vstack((psdN, Qmin))
+
+    return psdN
