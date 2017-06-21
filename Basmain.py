@@ -5,12 +5,10 @@ import larsfunctions as l_f
 tsegment = 20e-3  # 20ms segment
 overlap = 0.5
 filelocation = 'Audio/clean.wav'
-noise = 1  #Add noise? 1 = noise
+noise = 'Audio/n.wav'
 
 
 data, fs = b_f.import_data(filelocation,noise) #import data (possibly with noise)
-
-data = data/max(data)
 
 s_segment = int(tsegment * fs) # Calculate segment and overlap
 s_overlap = int(overlap * s_segment)
