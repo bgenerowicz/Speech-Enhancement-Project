@@ -41,7 +41,7 @@ def import_data(filelocation,noise):
 
     noisy_data = noisy_data / max(noisy_data)  #normalize
 
-    return noisy_data, fs
+    return noisy_data,n, fs
 
 
 
@@ -137,3 +137,17 @@ def wiener(Py,Pn,y_k):
     Sk_est = H*y_k
 
     return Sk_est
+
+def temp_psd(framed_data):
+    Py = np.absolute(np.fft.fft(framed_data))**2
+
+    return Py
+
+def plot_minPtrack(framed_noise,Pn_est,fs):
+    Pn_true_framed = np.absolute(np.fft.fft(framed_noise))**2
+    x_axis = np.array(range(0,Pn_true_framed.size))/fs
+    Pn_true = np.ravel(Pn_true_framed)
+
+    plt.plot(x_axis,Pn_true)
+    plt.show()
+    end = 1
