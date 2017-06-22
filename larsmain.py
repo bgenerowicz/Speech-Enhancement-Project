@@ -57,6 +57,6 @@ reconstructed_data =overlap_add(ifft_data,len(newdata),s_segment,s_overlap)
 
 residual = calculate_residual(filelocation,reconstructed_data,remainder)
 
-sf.write('new_file2.ogg', reconstructed_data, fs)
+#sf.write('new_file2.ogg', reconstructed_data, fs)
 
 end=1
