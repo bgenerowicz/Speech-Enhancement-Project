@@ -90,7 +90,7 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
     R = F_data.shape[0]
     #noisevariance=np.empty(k)
     noisevariance = np.empty([R,k])
-
+    #alphastack=np.empty([R,k])
     for j in range(0, R - 1):
         #fourier_row = F_data[j, :]  # load fourier of row
         #psd_row = np.absolute(fourier_row) ** 2  # psd of row
@@ -107,6 +107,7 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
         # This also makes sense because Q=Qprev=0 means that in the next iteration Qprev will just not be taken into account
         # when calculating alpha
 
+        #alphastack[j,:]=alpha
         Qprev = Q  # set previous value for next iteration
         #noisevariance = np.vstack((noisevariance, Q))  # write in matrix
         noisevariance[j,:] = Q

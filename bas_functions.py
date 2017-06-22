@@ -35,17 +35,13 @@ def i_transform_data(F_data):
 
 def import_data(filelocation,noise):
     # Import data & fs
-    data, fs = sf.read(filelocation)
+    data, fs = sf.read(filelocation)   #Import clean signal
+    n, fs = sf.read(noise)     #Import noise
+    noisy_data = data+20*n      #Add noise
 
-    if noise == 1:
-        #Add Noise
-        mean = 0
-        std = 0.05
-        num_samples = len(data)
-        wgn = np.random.normal(mean, std, num_samples)
-        data = data + wgn
+    noisy_data = noisy_data / max(noisy_data)  #normalize
 
-    return data, fs
+    return noisy_data, fs
 
 
 
@@ -130,3 +126,14 @@ def signal_estimate(s_PSD_est,fft_data):
 def play_array(data,fs):
     data = data / max(data)
     sd.play(data,fs)
+
+def wiener(Py,Pn,y_k):
+    Py[Py == 0] = np.nan  # set nan to avoid division by zero
+
+
+    H = (1- Pn/Py) # Work out wiener gain
+
+    H[np.isnan(H)] = 0  #convert nans back to zeros
+    Sk_est = H*y_k
+
+    return Sk_est

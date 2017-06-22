@@ -1,75 +1,45 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import soundfile as sf
-from SingleMic import segment_overlap as s_o
-from SingleMic import inverse_segment_overlap as i_s_o
-import time
-import pylab
+import bas_functions as b_f
+import larsfunctions as l_f
 
-start_time = time.time()
-
-#Variables
-tsegment = 20e-3 #20ms segment
+# Variables
+tsegment = 20e-3  # 20ms segment
 overlap = 0.5
+filelocation = 'Audio/clean.wav'
+noise = 'Audio/n.wav'
 
-#Import data & fs
-data, fs = sf.read('Audio/clean.wav')
 
-# Calc
-s_segment = int(tsegment * fs)
+data, fs = b_f.import_data(filelocation,noise) #import data (possibly with noise)
+
+s_segment = int(tsegment * fs) # Calculate segment and overlap
 s_overlap = int(overlap * s_segment)
-# pad data with zeros
-remainder = s_segment - (len(data) % s_segment)
-data_extended = np.ravel(np.asmatrix(np.pad(data, (0, int(remainder)), 'constant')))
 
 
-#Segment & overlap the data
-data_seg_over = s_o.segment_overlap(data_extended,s_segment,s_overlap)
+framed_data = b_f.frame_data(data,fs,s_segment,s_overlap) #Frame data using hanning
+y_k = b_f.transform_data(framed_data) #FFT of every segment, # Step 1 of slide 76, lecture 1
 
+# Appling slide 76, lecture 1
+# Py = b_f.bas_bartlett(framed_data) # Step 2 of slide 76, lecture 1
+# Ps_est = b_f.signal_PSD_estimate(Py) # Step 3 of slide 76, lecture 1
+# Sk_est = b_f.signal_estimate(Ps_est,y_k) # Step 4 of slide 76, lecture 1
+# ifft_data = b_f.i_transform_data(Sk_est) #inverse transform data, # Step 5 of slide 76, lecture 1
 
-#Create & Apply hanning window
-hanning_segment = np.hanning(data_seg_over.shape[1])
-data_han_seg_over = np.multiply(hanning_segment,data_seg_over)
+# Applying slide 17, lecture 4
+Py = b_f.bas_bartlett(framed_data) #
 
-#FFT
-data_han_seg_over = data_seg_over
-F_data = np.fft.fft(data_han_seg_over)
+windowlength = int(1.5 / tsegment)
+Pn = l_f.calculate_noisepsd_min(Py,tsegment,windowlength)
 
-#IFFT
-IF_data = np.fft.ifft(F_data)
-IF_data_array = np.ravel(IF_data)
+Sk_est = b_f.wiener(Py,Pn,y_k)
+ifft_data = b_f.i_transform_data(Sk_est) #inverse transform data
 
-#Invert segmentation / overlap
-reconstructed_data = i_s_o.inverse_segment_overlap(IF_data_array,len(data_extended),s_segment,s_overlap)
+reconstructed_data = b_f.overlap_add(ifft_data,len(data),s_segment, s_overlap) # Overlap & add
+b_f.make_plot(data,reconstructed_data) # Make plots
 
-#Calculate Residual
-residual = data_extended - reconstructed_data
+# b_f.play_array(data,fs)
+# b_f.play_array(reconstructed_data,fs)
 
-#
-# transform back into array
-# x_array = np.ravel(x)
-# x_truncarray = i_s_o.inverse_segment_overlap(x_array,len(data_extended),s_segment,s_overlap)
-#
-#
-#
-# #calculate difference between initial and reconstructed signals
+end =1
 
-
-
-#Plots
-# f, axarr = plt.subplots(3, sharex=True)
-# axarr[2].plot(residual)
-# axarr[2].set_title('Residual')
-# pylab.ylim([-0.5, 0.5])
-# axarr[1].plot(reconstructed_data)
-# axarr[1].set_title('Reconstructed')
-# axarr[0].plot(data_extended)
-# axarr[0].set_title('Original')
-#
-# plt.show()
-
-print("--- %s seconds ---" % (time.time() - start_time))
-end = 1
 
 
 

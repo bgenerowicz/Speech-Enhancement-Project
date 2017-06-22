@@ -52,11 +52,19 @@ s_est,gainmatrix=wiener(F_data_bartlett,noisevariance,F_data)
 
 ifft_data = i_transform_data(s_est)
 
-##TODO change overlapp add (hanning)
 reconstructed_data =overlap_add(ifft_data,len(newdata),s_segment,s_overlap)
 
 residual = calculate_residual(filelocation,reconstructed_data,remainder)
 
 #sf.write('new_file2.ogg', reconstructed_data, fs)
+
+
+xval=len(newdata)/fs
+
+y=noisevariance[:,200]
+x=np.arange(0,xval)
+#plt.xticks(x,int(xval))
+plt.plot(x,y)
+plt.show()
 
 end=1
