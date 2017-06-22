@@ -37,10 +37,11 @@ def import_data(filelocation,noise):
     # Import data & fs
     data, fs = sf.read(filelocation)   #Import clean signal
     n, fs = sf.read(noise)     #Import noise
-    noisy_data = data+20*n      #Add noise
+    n = 20*n
+    noisy_data = data+n      #Add noise
 
     noisy_data = noisy_data / max(noisy_data)  #normalize
-
+    n = n / max(n)
     return noisy_data,n, fs
 
 
@@ -145,9 +146,18 @@ def temp_psd(framed_data):
 
 def plot_minPtrack(framed_noise,Pn_est,fs):
     Pn_true_framed = np.absolute(np.fft.fft(framed_noise))**2
-    x_axis = np.array(range(0,Pn_true_framed.size))/fs
-    Pn_true = np.ravel(Pn_true_framed)
 
-    plt.plot(x_axis,Pn_true)
+
+    #pick a k
+    k = 200
+
+    Pn_k_true =  Pn_true_framed[:,k]
+    Pn_k_est = Pn_est[:,k]
+
+    x_axis = 320*np.array(range(0, Pn_k_true.size)) / fs
+
+
+    plt.plot(x_axis,Pn_k_est)
+    # plt.plot(x_axis,Pn_k_true)
     plt.show()
     end = 1
