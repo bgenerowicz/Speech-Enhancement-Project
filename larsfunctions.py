@@ -91,13 +91,18 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
     #noisevariance=np.empty(k)
     noisevariance = np.empty([R,k])
     #alphastack=np.empty([R,k])
+    #noisevariance[0,:]=F_data[0,:]
+
     for j in range(0, R - 1):
         #fourier_row = F_data[j, :]  # load fourier of row
         #psd_row = np.absolute(fourier_row) ** 2  # psd of row
         psd_row = F_data[j,:]
+        psd_row_prev=F_data[j-1,:]
 
         psd_row[psd_row == 0] = np.nan  # set nan to avoid division by zero
         alpha = 1 / (1 + (Qprev / psd_row - 1) ** 2)  # calculate alpha, see paper in dropbox
+        alpha[np.where(alpha >= 0.96)] = 0.96 #maximum alpha should be 0.96, see paper
+
         #alpha = 0.85 #for testing
 
         onevector = np.array(np.ones(k))  # make onevector
@@ -201,3 +206,68 @@ def wiener(Py,Pn,y_k):
     s_est=gain*y_k
 
     return s_est, gain
+
+def Noise_MMSE(framed_data,fft_data,s_segment):
+    num_frames = len(framed_data)
+    Npsd = np.zeros([num_frames - 1, s_segment])
+
+    k = 5  # number of frames from which the initial noise psd is estimated
+
+    sigma_k = fft_data[0:k, :]
+    sigma_N = np.mean(np.absolute(sigma_k) ** 2, axis=0)  # averaging first k frames
+    Npsd = np.vstack((sigma_N, Npsd))
+
+    P_l = 0.5  # Initialize smoothened version of P(H1|y)
+    a_PH1 = 0.9
+    a_N = 0.8
+    PH1 = 0.5  # Prior probability of speech presence
+    PH0 = 1 - PH1  # Prior probability of speech absence
+    ratio_P = PH1 / PH0
+    ksi_H1_dB = 10  # Fixed a priori SNR
+    ksi_H1 = 10 ** (ksi_H1_dB / 10)
+
+    signal_power = np.abs(framed_data) ** 2  # Dirty signal Power |y|^2
+
+    for j in range(0, num_frames):
+        zeta = signal_power[j, :] / sigma_N  # a posteriori SNR
+        PH1 = (1 + ratio_P * (1 + ksi_H1) * np.exp(- zeta * ksi_H1 / (1 + ksi_H1))) ** (-1)  # A posteriori SPP
+        P_l = a_PH1 * P_l + (1 - a_PH1) * PH1  # Smoothen P(H1|y)
+        PH1[P_l > 0.99] = min(PH1[P_l > 0.99], 0.99)
+        MMSE_noise = PH0 * signal_power[j, :] + PH1 * sigma_N
+        sigma_N = a_N * sigma_N + (1 - a_N) * MMSE_noise
+        Npsd[j, :] = sigma_N
+
+    return Npsd
+
+def lars_bartlett(psd_F_data):
+    # Bartlett: split a time segment of 320 into smaller segments, take psd of smaller segments (make length 320 again)
+    # and average over each of the segments
+    # Step 2 of slide 76, lecture 1
+    M=5
+    k = psd_F_data.shape[1]  # number of freq bins
+    R = psd_F_data.shape[0]
+    numcols = copy.copy(k)  # number of columns
+    numrows = copy.copy(R)  # number of rows
+    bartlett_estimate = np.empty([R,k])
+
+    for rowstart, rowend in zip(range(0, numrows - M, 1),range(M - 1, numrows, 1)):
+        bartlett_estimate[rowend, 0:k+1] = np.mean(psd_F_data[list(range(rowstart, rowend + 1)), :],axis=0)
+            # Per Window (with length 'windowlength', which are number of rows):
+            # Find the minimum per column and replace all the values in this column with the found minimum
+
+    return bartlett_estimate
+
+def lars_exponentialsmoother(psd_F_data,alpha):
+
+    k = psd_F_data.shape[1]  # number of freq bins
+    Qprev = np.array(np.zeros(k))
+    R = psd_F_data.shape[0] #rows
+
+    psd_F_data_smoothed = np.empty([R,k])
+    psd_F_data_smoothed[0,:] = psd_F_data[0,:]
+
+    for j in range(1, R - 1):
+        onevector = np.array(np.ones(k))  # make onevector
+        psd_F_data_smoothed[j,:] = alpha * psd_F_data_smoothed[j-1,:] + (onevector - alpha) * psd_F_data[j,:]  # hendricksbook: eq.(6.2)
+
+    return psd_F_data_smoothed
