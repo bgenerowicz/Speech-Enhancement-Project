@@ -205,7 +205,7 @@ def wiener(Py,Pn,y_k):
     gain[np.isnan(gain)] = 0
     s_est=gain*y_k
 
-    return s_est, gain
+    return s_est
 
 def Noise_MMSE(framed_data,fft_data,s_segment):
     num_frames = len(framed_data)
@@ -239,7 +239,7 @@ def Noise_MMSE(framed_data,fft_data,s_segment):
 
     return Npsd
 
-def lars_bartlett(psd_F_data):
+def bartlett(psd_F_data):
     # Bartlett: split a time segment of 320 into smaller segments, take psd of smaller segments (make length 320 again)
     # and average over each of the segments
     # Step 2 of slide 76, lecture 1
@@ -250,6 +250,8 @@ def lars_bartlett(psd_F_data):
     numrows = copy.copy(R)  # number of rows
     bartlett_estimate = np.empty([R,k])
 
+    bartlett_estimate[0:M-1,:] = np.zeros(k)
+
     for rowstart, rowend in zip(range(0, numrows - M, 1),range(M - 1, numrows, 1)):
         bartlett_estimate[rowend, 0:k+1] = np.mean(psd_F_data[list(range(rowstart, rowend + 1)), :],axis=0)
             # Per Window (with length 'windowlength', which are number of rows):
@@ -257,7 +259,7 @@ def lars_bartlett(psd_F_data):
 
     return bartlett_estimate
 
-def lars_exponentialsmoother(psd_F_data,alpha):
+def exponentialsmoother(psd_F_data,alpha):
 
     k = psd_F_data.shape[1]  # number of freq bins
     Qprev = np.array(np.zeros(k))
@@ -271,3 +273,31 @@ def lars_exponentialsmoother(psd_F_data,alpha):
         psd_F_data_smoothed[j,:] = alpha * psd_F_data_smoothed[j-1,:] + (onevector - alpha) * psd_F_data[j,:]  # hendricksbook: eq.(6.2)
 
     return psd_F_data_smoothed
+
+
+def ml_estimation(bartlett_y,sigma_n):
+
+    L = 3
+    k = bartlett_y.shape[1]  # number of freq bins
+    R = bartlett_y.shape[0] # number of frames
+    numcols = copy.copy(k)  # number of columns
+    numrows = copy.copy(R)  # number of rows
+
+    sigma_s_ml = np.empty([R, k])
+
+    for rowstart, rowend in zip(range(0, numrows - L, 1), range(L - 1, numrows, 1)):
+        sigma_s_ml[rowend, 0:k + 1] = np.mean(sigma_s_ml[list(range(rowstart, rowend + 1)), :], axis=0) - sigma_n[rowend,0:k+1]
+
+    return sigma_s_ml
+
+def dd_approach(sigma_s,sigma_n,bartlett_y,alpha):
+
+    k = bartlett_y.shape[1]  # number of freq bins
+    R = bartlett_y.shape[0] # number of frames
+    sigma_s_dd = np.empty([R, k])
+
+    for j in range(1, R - 1):
+        onevector = np.array(np.ones(k))  # make onevector
+        sigma_s_dd[j,:] = alpha * sigma_s[j-1,:]/sigma_n[j,1] + (onevector - alpha) * np.maximum( (bartlett_y[j,:]/sigma_n[j,:])-1,0)  # hendricksbook: eq.(6.2)
+
+    return sigma_s_dd
