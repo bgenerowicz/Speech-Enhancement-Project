@@ -76,6 +76,7 @@ def calculate_residual(filelocation,reconstruction,remainder):
     return residual
 
 
+
 def calculate_noisepsd_min(F_data,tsegment,windowlength):
     #F_data is PSD (Bartlett Estimate!)
 
@@ -86,35 +87,37 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
 
 
     k = F_data.shape[1]  # number of freq bins
-    Qprev = np.array(np.zeros(k))
     R = F_data.shape[0]
-    #noisevariance=np.empty(k)
-    noisevariance = np.empty([R,k])
-    #alphastack=np.empty([R,k])
-    #noisevariance[0,:]=F_data[0,:]
+    noisevariance = np.empty([R, k])
+    noisevariance[0,:] = np.zeros(k)
+    alphastack = np.empty([R, k])
+    alphastack[0, :] = np.zeros(k)
 
-    for j in range(0, R - 1):
-        #fourier_row = F_data[j, :]  # load fourier of row
-        #psd_row = np.absolute(fourier_row) ** 2  # psd of row
+    for j in range(1, R - 1):
+
         psd_row = F_data[j,:]
         psd_row_prev=F_data[j-1,:]
 
         psd_row[psd_row == 0] = np.nan  # set nan to avoid division by zero
-        alpha = 1 / (1 + (Qprev / psd_row - 1) ** 2)  # calculate alpha, see paper in dropbox
+        oldsigma=noisevariance[j-1,:]
+        oldsigma[oldsigma == 0] = np.nan
+
+        alpha = 1 / (1 + (psd_row_prev / oldsigma - 1) ** 2)  # calculate alpha, see paper in dropbox
+
+        alpha[np.isnan(alpha)] = 0
         alpha[np.where(alpha >= 0.96)] = 0.96 #maximum alpha should be 0.96, see paper
+        alpha[np.where(alpha < 0.3)] = 0.3
 
         #alpha = 0.85 #for testing
 
         onevector = np.array(np.ones(k))  # make onevector
-        Q = alpha * Qprev + (onevector - alpha) * psd_row  # hendricksbook: eq.(6.2)
+        Q = alpha * psd_row_prev + (onevector - alpha) * psd_row  # hendricksbook: eq.(6.2)
 
         Q[np.isnan(Q)] = 0  # All nan values should be put to zero, otherwise the corresponding frequency bin values will be nan forever
         # This also makes sense because Q=Qprev=0 means that in the next iteration Qprev will just not be taken into account
         # when calculating alpha
 
-        #alphastack[j,:]=alpha
-        Qprev = Q  # set previous value for next iteration
-        #noisevariance = np.vstack((noisevariance, Q))  # write in matrix
+        alphastack[j,:]=alpha
         noisevariance[j,:] = Q
 
 
@@ -132,7 +135,7 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
             # Per Window (with length 'windowlength', which are number of rows):
             # Find the minimum per column and replace all the values in this column with the found minimum
 
-    return noisevariance_minima
+    return noisevariance_minima,alphastack
 
 
 def calculate_speechpsd_heuristic(F_data,noisevariance):
