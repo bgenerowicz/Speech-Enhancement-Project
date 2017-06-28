@@ -33,15 +33,16 @@ from bas_functions import overlap_add
 #from bas_functions import import_data
 from bas_functions import frame_data
 from bas_functions import transform_data
+from bas_functions import play_array
 
 tsegment = 20e-3
-filelocation = 'Audio/clean+20n.wav'
+filelocation = 'Audio/clean+10n.wav'
 windowlength = int(1.5 / tsegment)  # segment in seconds to find minimum psd, respectively psd of noise
 overlap = 0.5
 newdata,fs= import_data(filelocation)
 filelocation_clean = 'Audio/clean.wav'
 newdata_clean,_= import_data(filelocation_clean)
-noise_location = 'Audio/20n.wav'
+noise_location = 'Audio/10n.wav'
 alpha_smooth_exponential=0.85
 alpha_smooth_dd=0.96
 
@@ -76,10 +77,11 @@ residual = calculate_residual(filelocation,reconstructed_data,remainder)
 
 s_est_mmse=wiener(F_data,psd_F_data,F_data)
 
-sigma_s_ml = ml_estimation(F_data_exponential,noisevariance_min)
-sigma_s_dd = dd_approach(sigma_s_ml,noisevariance_min,F_data_exponential,alpha_smooth_dd)
+sigma_s_ml = ml_estimation(F_data_exponential,noisevariance_mmse)
+sigma_s_dd = dd_approach(sigma_s_ml,noisevariance_mmse,F_data_exponential,alpha_smooth_dd)
 
-gainmatrix = sigma_s_dd / (sigma_s_dd + noisevariance_min)
+gainmatrix = sigma_s_dd / (sigma_s_dd + noisevariance_mmse)
+#gainmatrix = 1-noisevariance_mmse/F_data_exponential
 gainmatrix = np.maximum(gainmatrix,0)
 
 s_est_min = F_data_exponential * gainmatrix
@@ -90,22 +92,22 @@ reconstructed_data_mmse = overlap_add(ifft_data,len(newdata),s_segment,s_overlap
 
 #sf.write('new_file3_mmse.ogg', reconstructed_data, fs)
 
-y=10*np.log10(psd_F_data_noise[:,170])
+y=10*np.log10(psd_F_data_noise[:,225])
 y[y == 0] = np.nan
 x_axis2 = 320*np.array(range(0,y.size))/fs
 signalpowerplot=plt.plot(x_axis2,y,color = 'g',alpha=0.4, label="Noise Power")
 
-# y=10*np.log10(F_data_exponential[:,170])
+# y=10*np.log10(F_data_exponential[:,225])
 # y[y == 0] = np.nan
 # x_axis2 = 320*np.array(range(0,y.size))/fs
 # exponential_plot=plt.plot(x_axis2,y,color = 'g',alpha=0.9,  label="PSD Exponential Smoothed")
 
-y=10*np.log10(noisevariance_min[:,170])
+y=10*np.log10(noisevariance_min[:,225])
 y[y == 0] = np.nan
 x_axis2 = 320*np.array(range(0,y.size))/fs
 noisevarianceplot=plt.plot(x_axis2,y,color = 'r',alpha=0.8, label="Noise Variance (Minimum)")
 
-y=10*np.log10(noisevariance_mmse[:,170])
+y=10*np.log10(noisevariance_mmse[:,225])
 y[y == 0] = np.nan
 x_axis2 = 320*np.array(range(0,y.size))/fs
 noisevariance_mmse=plt.plot(x_axis2,y,color = 'r',alpha=0.5,  label="Noise Variance (MMSE)")

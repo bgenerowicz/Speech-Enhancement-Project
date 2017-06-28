@@ -277,7 +277,7 @@ def exponentialsmoother(psd_F_data,alpha):
 
 def ml_estimation(bartlett_y,sigma_n):
 
-    L = 3
+    L = 2
     k = bartlett_y.shape[1]  # number of freq bins
     R = bartlett_y.shape[0] # number of frames
     numcols = copy.copy(k)  # number of columns
@@ -286,7 +286,7 @@ def ml_estimation(bartlett_y,sigma_n):
     sigma_s_ml = np.empty([R, k])
 
     for rowstart, rowend in zip(range(0, numrows - L, 1), range(L - 1, numrows, 1)):
-        sigma_s_ml[rowend, 0:k + 1] = np.mean(sigma_s_ml[list(range(rowstart, rowend + 1)), :], axis=0) - sigma_n[rowend,0:k+1]
+        sigma_s_ml[rowend, 0:k + 1] = np.mean(bartlett_y[list(range(rowstart, rowend + 1)), :], axis=0) - sigma_n[rowend,0:k+1]
 
     return sigma_s_ml
 
