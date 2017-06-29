@@ -95,11 +95,11 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
 
     for j in range(1, R - 1):
 
-        psd_row = F_data[j,:]
-        psd_row_prev=F_data[j-1,:]
+        psd_row = copy.copy(F_data[j,:])
+        psd_row_prev=copy.copy(F_data[j-1,:])
 
         psd_row[psd_row == 0] = np.nan  # set nan to avoid division by zero
-        oldsigma=noisevariance[j-1,:]
+        oldsigma=copy.copy(noisevariance[j-1,:])
         oldsigma[oldsigma == 0] = np.nan
 
         alpha = 1 / (1 + (psd_row_prev / oldsigma - 1) ** 2)  # calculate alpha, see paper in dropbox
@@ -111,7 +111,7 @@ def calculate_noisepsd_min(F_data,tsegment,windowlength):
         #alpha = 0.85 #for testing
 
         onevector = np.array(np.ones(k))  # make onevector
-        Q = alpha * psd_row_prev + (onevector - alpha) * psd_row  # hendricksbook: eq.(6.2)
+        Q = alpha * noisevariance[j-1,:] + (onevector - alpha) * psd_row  # hendricksbook: eq.(6.2)
 
         Q[np.isnan(Q)] = 0  # All nan values should be put to zero, otherwise the corresponding frequency bin values will be nan forever
         # This also makes sense because Q=Qprev=0 means that in the next iteration Qprev will just not be taken into account
@@ -217,27 +217,28 @@ def Noise_MMSE(framed_data,fft_data,s_segment):
     k = 5  # number of frames from which the initial noise psd is estimated
 
     sigma_k = fft_data[0:k, :]
-    sigma_N = np.mean(np.absolute(sigma_k) ** 2, axis=0)  # averaging first k frames
+    #sigma_N = np.mean(np.absolute(sigma_k) ** 2, axis=0)  # averaging first k frames
+    sigma_N = np.mean(sigma_k, axis=0)
     Npsd = np.vstack((sigma_N, Npsd))
 
     P_l = 0.5  # Initialize smoothened version of P(H1|y)
-    a_PH1 = 0.9
-    a_N = 0.8
+    a_PH1 = 0.9 #stagnation avoidance
+    a_N = 0.8 #alphapow
     PH1 = 0.5  # Prior probability of speech presence
     PH0 = 1 - PH1  # Prior probability of speech absence
     ratio_P = PH1 / PH0
     ksi_H1_dB = 10  # Fixed a priori SNR
     ksi_H1 = 10 ** (ksi_H1_dB / 10)
 
-    signal_power = np.abs(framed_data) ** 2  # Dirty signal Power |y|^2
-
+    #signal_power = np.abs(framed_data) ** 2  # Dirty signal Power |y|^2
+    signal_power=fft_data
     for j in range(0, num_frames):
         zeta = signal_power[j, :] / sigma_N  # a posteriori SNR
         PH1 = (1 + ratio_P * (1 + ksi_H1) * np.exp(- zeta * ksi_H1 / (1 + ksi_H1))) ** (-1)  # A posteriori SPP
         P_l = a_PH1 * P_l + (1 - a_PH1) * PH1  # Smoothen P(H1|y)
         PH1[P_l > 0.99] = min(PH1[P_l > 0.99], 0.99)
-        MMSE_noise = PH0 * signal_power[j, :] + PH1 * sigma_N
-        sigma_N = a_N * sigma_N + (1 - a_N) * MMSE_noise
+        MMSE_noise = PH0 * signal_power[j, :] + PH1 * sigma_N #eq. (22)
+        sigma_N = a_N * sigma_N + (1 - a_N) * MMSE_noise #eq. (8)
         Npsd[j, :] = sigma_N
 
     return Npsd

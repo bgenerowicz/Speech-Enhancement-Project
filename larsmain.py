@@ -56,19 +56,19 @@ psd_F_data=np.absolute(F_data)**2
 
 ## Noise import
 rmsarray_han_noise,fs,_ = import_frame_data(noise_location,tsegment)
-F_data_noise=transform_data(rmsarray_han_noise)
-psd_F_data_noise=np.absolute(F_data_noise)**2
+F_data_noise = transform_data(rmsarray_han_noise)
+psd_F_data_noise = np.absolute(F_data_noise)**2
 
 
-F_data_bartlett=bartlett(psd_F_data) #bartlett smoothing
-F_data_exponential=exponentialsmoother(psd_F_data,alpha_smooth_exponential) #exponential smoothing
+F_data_bartlett = bartlett(psd_F_data) #bartlett smoothing
+F_data_exponential = exponentialsmoother(psd_F_data,alpha_smooth_exponential) #exponential smoothing
 
-noisevariance_min,alphastack=calculate_noisepsd_min(F_data_exponential,tsegment,windowlength) #calculate Pn with minimum tracking
-noisevariance_mmse=Noise_MMSE(rmsarray_han,F_data,s_segment)
+noisevariance_min,alphastack = calculate_noisepsd_min(F_data_exponential,tsegment,windowlength) #calculate Pn with minimum tracking
+noisevariance_mmse = Noise_MMSE(rmsarray_han,F_data_exponential,s_segment)
 
-noisevariance=noisevariance_min
+noisevariance = noisevariance_mmse
 
-s_est=wiener(F_data_bartlett,psd_F_data,F_data)
+s_est = wiener(F_data_bartlett,noisevariance,F_data)
 ifft_data = i_transform_data(s_est)
 reconstructed_data = overlap_add(ifft_data,len(newdata),s_segment,s_overlap)
 
@@ -81,12 +81,21 @@ s_est_mmse=wiener(F_data,psd_F_data,F_data)
 sigma_s_ml = ml_estimation(F_data_exponential,noisevariance)
 sigma_s_dd = dd_approach(sigma_s_ml,noisevariance,F_data_exponential,alpha_smooth_dd)
 
+
+
+noisevariance[noisevariance == 0] = np.nan
 gainmatrix = sigma_s_dd / (sigma_s_dd + noisevariance)
+gainmatrix[np.isnan(gainmatrix) ] = 1
+
 #gainmatrix = 1-noisevariance_mmse/F_data_exponential
-gainmatrix = np.maximum(gainmatrix,0.2)
+gainmatrix = np.maximum(gainmatrix,0)
+
+
 
 s_est_min = F_data_exponential * gainmatrix
 ifft_data = i_transform_data(s_est_min)
+
+
 
 reconstruction = overlap_add(ifft_data,len(newdata),s_segment,s_overlap)
 
@@ -116,6 +125,20 @@ noisevariance_mmse=plt.plot(x_axis2,y,color = 'r',alpha=0.5,  label="Noise Varia
 
 
 plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
+
+
+
+# ## Plots for Exponential Smoothing
+# y=10*np.log10(psd_F_data[:,120])
+# y[y == 0] = np.nan
+# x_axis2 = 320*np.array(range(0,y.size))/fs
+# signalpowerplot=plt.plot(x_axis2,y,color = 'c',alpha=0.4, label="Noise Power")
+#
+# y=10*np.log10(F_data_exponential[:,120])
+# y[y == 0] = np.nan
+# x_axis2 = 320*np.array(range(0,y.size))/fs
+# signalpowerplot=plt.plot(x_axis2,y,color = 'r',alpha=0.5, label="Noise Power")
+
 plt.show()
 
 end=1

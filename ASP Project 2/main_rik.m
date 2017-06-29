@@ -24,7 +24,7 @@ speech_data = speech_data(1:ceil(length(speech_data)/10));
 noise_data = noise_data(1:ceil(length(noise_data)/10));
 
 sumsound= speech_data + noise_data;
-audiowrite('Files\initial.wav',sumsound,fs)
+audiowrite('initial.wav',sumsound,fs)
 
 % find the true SNR
 speech_power = sum(sumsound .* sumsound);
