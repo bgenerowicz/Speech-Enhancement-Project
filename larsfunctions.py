@@ -281,7 +281,7 @@ def exponentialsmoother(psd_F_data,alpha):
 
 def ml_estimation(bartlett_y,sigma_n):
 
-    L = 2
+    L = 7
     k = bartlett_y.shape[1]  # number of freq bins
     R = bartlett_y.shape[0] # number of frames
     numcols = copy.copy(k)  # number of columns
@@ -298,10 +298,11 @@ def dd_approach(sigma_s,sigma_n,bartlett_y,alpha,eps):
 
     k = bartlett_y.shape[1]  # number of freq bins
     R = bartlett_y.shape[0] # number of frames
+
     sigma_s_dd = np.empty([R, k])
 
     for j in range(1, R - 1):
         onevector = np.array(np.ones(k))  # make onevector
-        sigma_s_dd[j,:] = np.maximum( alpha * sigma_s[j-1,:]+ (onevector - alpha) *  (bartlett_y[j,:]-sigma_n[j,:]),eps)
+        sigma_s_dd[j,:] = np.maximum( alpha * sigma_s[j-1,:]+ (onevector - alpha) *  (bartlett_y[j,:]-sigma_n[j,:]),0.7*sigma_n[j,:])
 
     return sigma_s_dd
