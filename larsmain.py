@@ -44,8 +44,8 @@ filelocation_clean = 'Audio/clean.wav'
 newdata_clean,_= import_data(filelocation_clean)
 noise_location = 'Audio/10n.wav'
 alpha_smooth_exponential=0.85
-alpha_smooth_dd=0.96
-
+alpha_smooth_dd=0.2
+eps=0.6
 rmsarray_han,fs,remainder = import_frame_data(filelocation,tsegment)
 
 s_segment = int(tsegment * fs) # Calculate segment and overlap
@@ -79,7 +79,7 @@ residual = calculate_residual(filelocation,reconstructed_data,remainder)
 s_est_mmse=wiener(F_data,psd_F_data,F_data)
 
 sigma_s_ml = ml_estimation(F_data_exponential,noisevariance)
-sigma_s_dd = dd_approach(sigma_s_ml,noisevariance,F_data_exponential,alpha_smooth_dd)
+sigma_s_dd = dd_approach(sigma_s_ml,noisevariance,F_data_exponential,alpha_smooth_dd,eps)
 
 
 

@@ -294,7 +294,7 @@ def ml_estimation(bartlett_y,sigma_n):
 
     return sigma_s_ml
 
-def dd_approach(sigma_s,sigma_n,bartlett_y,alpha):
+def dd_approach(sigma_s,sigma_n,bartlett_y,alpha,eps):
 
     k = bartlett_y.shape[1]  # number of freq bins
     R = bartlett_y.shape[0] # number of frames
@@ -302,6 +302,6 @@ def dd_approach(sigma_s,sigma_n,bartlett_y,alpha):
 
     for j in range(1, R - 1):
         onevector = np.array(np.ones(k))  # make onevector
-        sigma_s_dd[j,:] = alpha * sigma_s[j-1,:]/sigma_n[j,1] + (onevector - alpha) * np.maximum( (bartlett_y[j,:]/sigma_n[j,:])-1,0)  # hendricksbook: eq.(6.2)
+        sigma_s_dd[j,:] = np.maximum( alpha * sigma_s[j-1,:]+ (onevector - alpha) *  (bartlett_y[j,:]-sigma_n[j,:]),eps)
 
     return sigma_s_dd
