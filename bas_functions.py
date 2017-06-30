@@ -238,18 +238,67 @@ def bas_SNR(s,y):
     s_trans_s = np.asarray(s_trans_s)
     e_trans_e = np.asarray(e_trans_e)
 
-    s_trans_s[s_trans_s == 0] = np.nan  # set nan to avoid division by zero
-    e_trans_e[e_trans_e == 0] = np.nan  # set nan to avoid division by zero
+    dSNR = []
+
+    for i in range(0,len(s_trans_s)):
+        if s_trans_s[i] < 0.001:
+            dSNR.append(10*np.log10(1/e_trans_e[i]))
+        elif e_trans_e[i] == 0:
+            dSNR.append(20)
+        else:
+            dSNR.append(10 * np.log10(s_trans_s[i] / e_trans_e[i]))
+
+    # s_trans_s[s_trans_s == 0] = np.nan  # set nan to avoid division by zero
+
+    # eps = 0.001
+    # temp = s_trans_s/ (e_trans_e + eps)
+    # # test = np.ones(len(temp))
+    # dSNR = 10 * np.log10(temp+eps)
+
+    # dSNR[np.isnan(dSNR)] = 0
 
 
-    dSNR = 10 * np.log10(s_trans_s / e_trans_e)
+    # s_trans_s[np.isnan(s_trans_s)] = 0  # convert nans back to zeros
+    # e_trans_e[np.isnan(e_trans_e)] = 0  # convert nans back to zeros
 
-    s_trans_s[np.isnan(s_trans_s)] = 0  # convert nans back to zeros
-    e_trans_e[np.isnan(e_trans_e)] = 0  # convert nans back to zeros
-    return dSNR
+    avg_snr = np.mean(dSNR)  # -3,9
+    end = 1
+    return avg_snr
+
+
+def plot_PSD(Pn_true,Pn_est1,Pn_est2,fs):
+
+    #pick a k
+    k = 180
+
+    Pn_k_true =  Pn_true[:,k]
+    Pn_k_est1 = Pn_est1[:,k]
+    Pn_k_est2 = Pn_est2[:, k]
+
+    x_axis = 320*np.array(range(0, Pn_k_true.size)) / fs
 
 
 
+    # f, axarr = plt.subplots(3, sharex=True)
+    # axarr[0].plot(x_axis,10*np.log10(Pn_k_true))
+    # axarr[0].set_title('True noise PSD for k = %s' %(k))
+    # axarr[0].set_ylim([-60, 0])
+    #
+    # axarr[1].plot(x_axis, 10 * np.log10(Pn_k_est1))
+    # axarr[1].set_title('Estimated noise PSD using MMSE for k = %s' % (k))
+    # axarr[1].set_ylim([-60, 0])
+    #
+    # axarr[2].plot(x_axis, 10 * np.log10(Pn_k_est2))
+    # axarr[2].set_title('Estimated noise PSD using min P tracking for k = %s' % (k))
+    # axarr[2].set_ylim([-60, 0])
+
+    plt.plot(x_axis,10*np.log10(Pn_k_true))
+    plt.plot(x_axis, 10 * np.log10(Pn_k_est1))
+    plt.plot(x_axis, 10 * np.log10(Pn_k_est2))
+
+
+    plt.show()
+    end = 1
 
 # def Bas_min_ptrack(Py,fs):
 #     sliding_n = int(1.5*fs)

@@ -3,7 +3,7 @@ import larsfunctions as l_f
 import Noise_MMSE as c_f
 
 
-
+import matplotlib.pyplot as plt
 
 # Variables
 tsegment = 20e-3  # 20ms segment
@@ -15,7 +15,7 @@ filelocation_noise = 'Audio/n.wav'
 s_n, fs = b_f.import_data(filelocation_clean) #import signal
 n_n, fs = b_f.import_data(filelocation_noise) #import noise
 
-n_n = 30*n_n  #Scale the noise
+n_n = 10*n_n  #Scale the noise
 y_n = s_n + n_n #Add scaled noise to signal
 s_segment = int(tsegment * fs) # Calculate segment and overlap
 s_overlap = int(overlap * s_segment)
@@ -38,30 +38,76 @@ Py_true = b_f.temp_psd(y_n_framed)
 Pn_true = b_f.temp_psd(n_n_framed) #Pn using exact noise
 
 
-Pn_est = c_f.Noise_MMSE(y_n_framed,s_segment,y_k)
-# Pn_est = l_f.calculate_noisepsd_min(Py_true,tsegment,windowlength)
+Pn_est1 = c_f.Noise_MMSE(y_n_framed,s_segment,y_k)
+# Pn_est2 = l_f.calculate_noisepsd_min(Py_true,tsegment,windowlength)
 
+#lars
+alpha_smooth_exponential = 0.85
+F_data_exponential=l_f.exponentialsmoother(Py_true,alpha_smooth_exponential) #exponential smoothing
+Pn_est2=l_f.calculate_noisepsd_min(F_data_exponential,tsegment,windowlength) #calculate Pn with minimum tracking
 
 # Py_est = b_f.bas_bartlett(y_n_framed) # Use bartlett to estimate Py
 
+# b_f.plot_PSD(Pn_true,Pn_est1,Pn_est2,fs)
 
 
 # b_f.make_recon_plot(Py_true[:,100],Py_est[:,100]) # Make plots
 
+#####
 
-Sk_est = b_f.wiener(Py_true,Pn_est,y_k)
+# import scipy.io as sio
+# sio.savemat('Export/Py_true.mat', {'vect':Py_true})
+
+
+# # Periodogram?
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from scipy import signal as sci
+
+
+#
+# t = 300000
+# y_n_trunc = y_n[t:t+80000]
+# y_n_trunc_norm = y_n_trunc/ max(y_n_trunc)
+# f, t, Sxx = sci.spectrogram(y_n_trunc_norm,fs,nperseg = 10000,scaling = 'spectrum')
+# plt.pcolormesh(t, f, Sxx)
+# plt.ylabel('Frequency [Hz]')
+# plt.xlabel('Time [sec]')
+# plt.show()
+
+#norm?
+# # for i in range(0,Py_true.shape[0]):
+# #     Py_true[i,:] = Py_true[i,:]/max(Py_true[i,:])
+#
+#
+# Py_true = 10*np.log10(np.absolute(Py_true))
+#
+# # for i in range(0,Py_true.shape[0]):
+# #     Py_true[i,:] = Py_true[i,:]/max(Py_true[i,:])
+#
+# Py_true = np.transpose(Py_true)
+#
+# plt.imshow(Py_true, aspect='auto')
+# end = 1
+#####
+
+
+
+Sk_est = b_f.wiener(Py_true,Pn_est2,y_k)
 
 ifft_data = b_f.i_transform_data(Sk_est) #inverse transform data
 reconstructed_data = b_f.overlap_add(ifft_data,len(y_n),s_segment, s_overlap) # Overlap & add
 
 # snr = b_f.bas_SNR(y_n_framed,ifft_data, s_n, reconstructed_data,y_n,fs) #wrong
 #SNR?
-dSNR1 = b_f.bas_SNR(s_n_framed,y_n_framed)   #SNR of noisy signal before recon
+# dSNR1 = b_f.bas_SNR(s_n_framed,y_n_framed)   #SNR of noisy signal before recon
 dSNR2 = b_f.bas_SNR(s_n_framed,ifft_data)
-b_f.plot_SNR(dSNR1,dSNR2) # Make plots
+# b_f.plot_SNR(dSNR1,dSNR2) # Make plots
 
 
-b_f.make_recon_plot(y_n,reconstructed_data) # Make plots
+
+
+# b_f.make_recon_plot(y_n,reconstructed_data) # Make plots
 
 
 end = 1
