@@ -217,8 +217,8 @@ def Noise_MMSE(framed_data,fft_data,s_segment):
     k = 5  # number of frames from which the initial noise psd is estimated
 
     sigma_k = fft_data[0:k, :]
-    sigma_N = np.mean(np.absolute(sigma_k) ** 2, axis=0)  # averaging first k frames
-    #sigma_N = np.mean(sigma_k, axis=0)
+    #sigma_N = np.mean(np.absolute(sigma_k) ** 2, axis=0)  # averaging first k frames
+    sigma_N = np.mean(sigma_k, axis=0)
     Npsd = np.vstack((sigma_N, Npsd))
 
     P_l = 0.5  # Initialize smoothened version of P(H1|y)
@@ -230,8 +230,8 @@ def Noise_MMSE(framed_data,fft_data,s_segment):
     ksi_H1_dB = 10  # Fixed a priori SNR
     ksi_H1 = 10 ** (ksi_H1_dB / 10)
 
-    signal_power = np.abs(framed_data) ** 2  # Dirty signal Power |y|^2
-    #signal_power=fft_data
+    #signal_power = np.abs(framed_data) ** 2  # Dirty signal Power |y|^2
+    signal_power=fft_data
     for j in range(0, num_frames):
         zeta = signal_power[j, :] / sigma_N  # a posteriori SNR
         PH1 = (1 + ratio_P * (1 + ksi_H1) * np.exp(- zeta * ksi_H1 / (1 + ksi_H1))) ** (-1)  # A posteriori SPP
@@ -289,12 +289,13 @@ def ml_estimation(bartlett_y,sigma_n):
 
     sigma_s_ml = np.empty([R, k])
 
+
     for rowstart, rowend in zip(range(0, numrows - L, 1), range(L - 1, numrows, 1)):
         sigma_s_ml[rowend, 0:k + 1] = np.mean(bartlett_y[list(range(rowstart, rowend + 1)), :], axis=0) - sigma_n[rowend,0:k+1]
 
     return sigma_s_ml
 
-def dd_approach(sigma_s,sigma_n,bartlett_y,alpha,eps):
+def dd_approach(sigma_s,sigma_n,bartlett_y,alpha,chi):
 
     k = bartlett_y.shape[1]  # number of freq bins
     R = bartlett_y.shape[0] # number of frames
@@ -303,6 +304,6 @@ def dd_approach(sigma_s,sigma_n,bartlett_y,alpha,eps):
 
     for j in range(1, R - 1):
         onevector = np.array(np.ones(k))  # make onevector
-        sigma_s_dd[j,:] = np.maximum( alpha * sigma_s[j-1,:]+ (onevector - alpha) *  (bartlett_y[j,:]-sigma_n[j,:]),0.7*sigma_n[j,:])
+        sigma_s_dd[j,:] = np.maximum( alpha * sigma_s[j-1,:]+ (onevector - alpha) *  (bartlett_y[j,:]-sigma_n[j,:]),chi*sigma_n[j,:])
 
     return sigma_s_dd

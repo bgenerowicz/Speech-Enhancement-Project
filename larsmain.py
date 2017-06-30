@@ -15,6 +15,7 @@ from bas_functions import import_data
 from bas_functions import frame_data
 from bas_functions import transform_data
 from larsfunctions import bartlett
+from larsfunctions import exponentialsmoother
 from larsfunctions import calculate_noisepsd_min
 from larsfunctions import Noise_MMSE
 from larsfunctions import wiener
@@ -28,16 +29,15 @@ from bas_functions import bas_SNR
 
 
 tsegment = 20e-3
-filelocation = 'Audio/clean+n.wav'
+filelocation = 'Audio/clean+20n.wav'
 windowlength = int(1.5 / tsegment)  # segment in seconds to find minimum psd, respectively psd of noise
 overlap = 0.5
 #newdata,fs= import_data(filelocation)
 filelocation_clean = 'Audio/clean.wav'
 newdata_clean,_= import_data(filelocation_clean)
-noise_location = 'Audio/n.wav'
+noise_location = 'Audio/20n.wav'
 alpha_smooth_exponential=0.85
 alpha_smooth_dd=0.96
-eps=0.0008
 
 
 ## Import Data
@@ -65,9 +65,9 @@ psd_F_data_noise = np.absolute(F_data_noise)**2
 
 
 ## Smoothing PSD
-F_data_bartlett = bartlett(psd_F_data) #bartlett smoothing
-#F_data_exponential = exponentialsmoother(psd_F_data,alpha_smooth_exponential) #exponential smoothing
-F_data_smoothed = copy.copy(F_data_bartlett)
+#F_data_bartlett = bartlett(psd_F_data) #bartlett smoothing
+F_data_exponential = exponentialsmoother(psd_F_data,alpha_smooth_exponential) #exponential smoothing
+F_data_smoothed = copy.copy(F_data_exponential)
 
 
 ## Calculate Noise PSD
@@ -77,36 +77,44 @@ noisevariance = noisevariance_mmse
 
 
 ## Apply Wiener Gain
-s_est = wiener(F_data_bartlett,noisevariance,F_data)
+s_est = wiener(F_data_smoothed,noisevariance,F_data)
 ifft_data = i_transform_data(s_est)
 reconstructed_data = overlap_add(ifft_data,len(signal),s_segment,s_overlap)
 
 
 ## ML and DD Approach
 sigma_s_ml = ml_estimation(F_data_smoothed,noisevariance)
-sigma_s_dd = dd_approach(sigma_s_ml,noisevariance,F_data_smoothed,alpha_smooth_dd,eps)
+for k in range(1,10,1):
+    for j in range(1,10,1):
+        #print(j)
+
+        alpha_smooth=0.96
+        chi=k/20
+        #print(chi)
+        sigma_s_dd = dd_approach(sigma_s_ml,noisevariance,F_data_smoothed,alpha_smooth_dd,chi)
 
 
-## Calculate Wiener Gain
-noisevariance[noisevariance == 0] = np.nan
-gainmatrix = sigma_s_dd / (sigma_s_dd + noisevariance)
-gainmatrix[np.isnan(gainmatrix) ] = 1
-gainmatrix = np.maximum(gainmatrix,0)
+        ## Calculate Wiener Gain
+        noisevariance[noisevariance == 0] = np.nan
+        gainmatrix = sigma_s_dd / (sigma_s_dd + noisevariance)
+        gainmatrix[np.isnan(gainmatrix) ] = 1
+        gainmatrix = np.maximum(gainmatrix,0)
 
-## Apply Gain
-s_est_min = F_data_smoothed * gainmatrix
+        ## Apply Gain
+        s_est_min = F_data_smoothed * gainmatrix
 
 
-## IFFT & Reconstruct
-ifft_data_min = i_transform_data(s_est_min)
-reconstruction = overlap_add(ifft_data_min,len(signal),s_segment,s_overlap)
+        ## IFFT & Reconstruct
+        ifft_data_min = i_transform_data(s_est_min)
+        reconstruction = overlap_add(ifft_data_min,len(signal),s_segment,s_overlap)
 
-## Calculate SNR
-snr_a=bas_SNR(signal_clean_han,signal_han)
-snr_a[np.isnan(snr_a)]=0
+    ## Calculate SNR
+    #snr_a=bas_SNR(signal_clean_han,signal_han)
 
-snr_b=bas_SNR(signal_clean_han,ifft_data)
-snr_b[np.isnan(snr_b)]=0
+    #snr_b=bas_SNR(signal_clean_han,ifft_data)
+
+        snr_c=bas_SNR(signal_clean_han,ifft_data_min)
+        print(snr_c)
 
 
 ## PLOTS
