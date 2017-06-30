@@ -73,7 +73,7 @@ F_data_smoothed = copy.copy(F_data_bartlett)
 ## Calculate Noise PSD
 noisevariance_min,alphastack = calculate_noisepsd_min(F_data_smoothed,tsegment,windowlength) #calculate Pn with minimum tracking
 noisevariance_mmse = Noise_MMSE(signal_han,F_data_smoothed,s_segment)
-noisevariance = noisevariance_min
+noisevariance = noisevariance_mmse
 
 
 ## Apply Wiener Gain
@@ -98,8 +98,8 @@ s_est_min = F_data_smoothed * gainmatrix
 
 
 ## IFFT & Reconstruct
-ifft_data = i_transform_data(s_est_min)
-reconstruction = overlap_add(ifft_data,len(signal),s_segment,s_overlap)
+ifft_data_min = i_transform_data(s_est_min)
+reconstruction = overlap_add(ifft_data_min,len(signal),s_segment,s_overlap)
 
 ## Calculate SNR
 snr_a=bas_SNR(signal_clean_han,signal_han)
@@ -111,22 +111,22 @@ snr_b[np.isnan(snr_b)]=0
 
 ## PLOTS
 
-y=10*np.log10(psd_F_data[:,220])
+y=10*np.log10(psd_F_data[:,150])
 y[y == 0] = np.nan
 x_axis2 = 320*np.array(range(0,y.size))/fs
 signalpowerplot=plt.plot(x_axis2,y,color = 'g',alpha=0.4, label="Signal Power")
 
-y=10*np.log10(F_data_smoothed[:,220])
+y=10*np.log10(F_data_smoothed[:,150])
 y[y == 0] = np.nan
 x_axis2 = 320*np.array(range(0,y.size))/fs
 exponential_plot=plt.plot(x_axis2,y,color = 'g',alpha=0.9,  label="PSD Exponential Smoothed")
 
-y=10*np.log10(noisevariance_min[:,220])
+y=10*np.log10(noisevariance_min[:,150])
 y[y == 0] = np.nan
 x_axis2 = 320*np.array(range(0,y.size))/fs
 noisevarianceplot=plt.plot(x_axis2,y,color = 'b',alpha=0.6, label="Noise Variance (Minimum)")
 
-y=10*np.log10(noisevariance_mmse[:,220])
+y=10*np.log10(noisevariance_mmse[:,150])
 y[y == 0] = np.nan
 x_axis2 = 320*np.array(range(0,y.size))/fs
 noisevariance_mmse=plt.plot(x_axis2,y,color = 'r',alpha=0.8,  label="Noise Variance (MMSE)")
