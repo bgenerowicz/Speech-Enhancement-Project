@@ -29,13 +29,13 @@ from bas_functions import bas_SNR
 
 
 tsegment = 20e-3
-filelocation = 'Audio/clean+20n.wav'
+filelocation = 'Audio/clean+intersection.wav'
 windowlength = int(1.5 / tsegment)  # segment in seconds to find minimum psd, respectively psd of noise
 overlap = 0.5
 #newdata,fs= import_data(filelocation)
 filelocation_clean = 'Audio/clean.wav'
 newdata_clean,_= import_data(filelocation_clean)
-noise_location = 'Audio/20n.wav'
+noise_location = 'Audio/intersection.wav'
 alpha_smooth_exponential=0.85
 alpha_smooth_dd=0.96
 
@@ -72,8 +72,8 @@ F_data_smoothed = copy.copy(F_data_exponential)
 
 ## Calculate Noise PSD
 noisevariance_min,alphastack = calculate_noisepsd_min(F_data_smoothed,tsegment,windowlength) #calculate Pn with minimum tracking
-noisevariance_mmse = Noise_MMSE(signal_han,F_data_smoothed,s_segment)
-noisevariance = noisevariance_min
+noisevariance_mmse = Noise_MMSE(signal_han,F_data,s_segment)
+noisevariance = noisevariance_mmse
 
 
 ## Apply Wiener Gain
@@ -109,29 +109,29 @@ snr_c=bas_SNR(signal_clean_han,ifft_data_min)
 
 ## PLOTS
 
-# y=10*np.log10(psd_F_data[:,150])
-# y[y == 0] = np.nan
-# x_axis2 = 320*np.array(range(0,y.size))/fs
-# signalpowerplot=plt.plot(x_axis2,y,color = 'g',alpha=0.4, label="Signal Power")
-#
-# y=10*np.log10(F_data_smoothed[:,150])
-# y[y == 0] = np.nan
-# x_axis2 = 320*np.array(range(0,y.size))/fs
-# exponential_plot=plt.plot(x_axis2,y,color = 'g',alpha=0.9,  label="PSD Exponential Smoothed")
-#
-# y=10*np.log10(noisevariance_min[:,150])
-# y[y == 0] = np.nan
-# x_axis2 = 320*np.array(range(0,y.size))/fs
-# noisevarianceplot=plt.plot(x_axis2,y,color = 'b',alpha=0.6, label="Noise Variance (Minimum)")
-#
-# y=10*np.log10(noisevariance_mmse[:,150])
-# y[y == 0] = np.nan
-# x_axis2 = 320*np.array(range(0,y.size))/fs
-# noisevariance_mmse=plt.plot(x_axis2,y,color = 'r',alpha=0.8,  label="Noise Variance (MMSE)")
-#
-#
-#
-# plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
+y=10*np.log10(psd_F_data_noise[:,120])
+y[y == 0] = np.nan
+x_axis2 = 320*np.array(range(0,y.size))/fs
+signalpowerplot=plt.plot(x_axis2,y,color = 'g',alpha=0.4, label="Noise Power")
+
+y=10*np.log10(F_data_smoothed[:,120])
+y[y == 0] = np.nan
+x_axis2 = 320*np.array(range(0,y.size))/fs
+exponential_plot=plt.plot(x_axis2,y,color = 'g',alpha=0.9,  label="PSD Exponential Smoothed")
+
+y=10*np.log10(noisevariance_min[:,120])
+y[y == 0] = np.nan
+x_axis2 = 320*np.array(range(0,y.size))/fs
+noisevarianceplot=plt.plot(x_axis2,y,color = 'b',alpha=0.6, label="Noise Variance (Minimum)")
+
+y=10*np.log10(noisevariance_mmse[:,120])
+y[y == 0] = np.nan
+x_axis2 = 320*np.array(range(0,y.size))/fs
+noisevariance_mmse=plt.plot(x_axis2,y,color = 'r',alpha=0.8,  label="Noise Variance (MMSE)")
+
+
+
+plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
 
 
 #

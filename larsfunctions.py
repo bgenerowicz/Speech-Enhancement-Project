@@ -230,8 +230,8 @@ def Noise_MMSE(framed_data,fft_data,s_segment):
     ksi_H1_dB = 10  # Fixed a priori SNR
     ksi_H1 = 10 ** (ksi_H1_dB / 10)
 
-    #signal_power = np.abs(framed_data) ** 2  # Dirty signal Power |y|^2
-    signal_power=fft_data
+    signal_power = np.abs(framed_data) ** 2  # Dirty signal Power |y|^2
+    #signal_power=fft_data
     for j in range(0, num_frames):
         zeta = signal_power[j, :] / sigma_N  # a posteriori SNR
         PH1 = (1 + ratio_P * (1 + ksi_H1) * np.exp(- zeta * ksi_H1 / (1 + ksi_H1))) ** (-1)  # A posteriori SPP
@@ -281,7 +281,7 @@ def exponentialsmoother(psd_F_data,alpha):
 
 def ml_estimation(bartlett_y,sigma_n):
 
-    L = 7
+    L = 4
     #k = bartlett_y.shape[1]  # number of freq bins
     #R = bartlett_y.shape[0] # number of frames
     numcols = bartlett_y.shape[1]  # number of columns
@@ -293,8 +293,8 @@ def ml_estimation(bartlett_y,sigma_n):
     for rowstart, rowend in zip(range(0, numrows - L, 1), range(L - 1, numrows, 1)):
         for k in range(0,numcols):
         #sigma_s_ml[rowend, 0:k + 1] = np.mean(bartlett_y[list(range(rowstart, rowend + 1)), :], axis=0) - sigma_n[rowend,0:k+1]
-            #sigma_s_ml[rowend, k] = np.mean(bartlett_y[list(range(rowstart, rowend + 1)), k], axis=0) - sigma_n[rowend,k]
-            sigma_s_ml[rowstart, k] = bartlett_y[rowstart, k] - sigma_n[rowend, k]
+            sigma_s_ml[rowend, k] = np.mean(bartlett_y[list(range(rowstart, rowend + 1)), k], axis=0) - sigma_n[rowend,k]
+            #sigma_s_ml[rowstart, k] = bartlett_y[rowstart, k] - sigma_n[rowend, k]
 
     return sigma_s_ml
 
