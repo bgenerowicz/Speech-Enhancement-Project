@@ -73,75 +73,65 @@ F_data_smoothed = copy.copy(F_data_exponential)
 ## Calculate Noise PSD
 noisevariance_min,alphastack = calculate_noisepsd_min(F_data_smoothed,tsegment,windowlength) #calculate Pn with minimum tracking
 noisevariance_mmse = Noise_MMSE(signal_han,F_data_smoothed,s_segment)
-noisevariance = noisevariance_mmse
+noisevariance = noisevariance_min
 
 
 ## Apply Wiener Gain
-s_est = wiener(F_data_smoothed,noisevariance,F_data)
+s_est,gainii = wiener(F_data_smoothed,noisevariance,F_data)
 ifft_data = i_transform_data(s_est)
 reconstructed_data = overlap_add(ifft_data,len(signal),s_segment,s_overlap)
 
 
 ## ML and DD Approach
 sigma_s_ml = ml_estimation(F_data_smoothed,noisevariance)
-for k in range(1,10,1):
-    for j in range(1,10,1):
-        #print(j)
-
-        alpha_smooth=0.96
-        chi=k/20
-        #print(chi)
-        sigma_s_dd = dd_approach(sigma_s_ml,noisevariance,F_data_smoothed,alpha_smooth_dd,chi)
+sigma_s_dd = dd_approach(sigma_s_ml,noisevariance,F_data_smoothed,0.96)
 
 
-        ## Calculate Wiener Gain
-        noisevariance[noisevariance == 0] = np.nan
-        gainmatrix = sigma_s_dd / (sigma_s_dd + noisevariance)
-        gainmatrix[np.isnan(gainmatrix) ] = 1
-        gainmatrix = np.maximum(gainmatrix,0)
+## Calculate Wiener Gain
+noisevariance[noisevariance == 0] = np.nan
+gainmatrix = sigma_s_dd / (sigma_s_dd + noisevariance)
+gainmatrix[np.isnan(gainmatrix) ] = 1
+gainmatrix = np.maximum(gainmatrix,0)
 
-        ## Apply Gain
-        s_est_min = F_data_smoothed * gainmatrix
+## Apply Gain
+s_est_min = F_data * gainmatrix
 
 
-        ## IFFT & Reconstruct
-        ifft_data_min = i_transform_data(s_est_min)
-        reconstruction = overlap_add(ifft_data_min,len(signal),s_segment,s_overlap)
+## IFFT & Reconstruct
+ifft_data_min = i_transform_data(s_est_min)
+reconstruction = overlap_add(ifft_data_min,len(signal),s_segment,s_overlap)
 
-    ## Calculate SNR
-    #snr_a=bas_SNR(signal_clean_han,signal_han)
-
-    #snr_b=bas_SNR(signal_clean_han,ifft_data)
-
-        snr_c=bas_SNR(signal_clean_han,ifft_data_min)
-        print(snr_c)
+## Calculate SNR
+snr_a=bas_SNR(signal_clean_han,signal_han)
+snr_b=bas_SNR(signal_clean_han,ifft_data)
+snr_c=bas_SNR(signal_clean_han,ifft_data_min)
 
 
 ## PLOTS
 
-y=10*np.log10(psd_F_data[:,150])
-y[y == 0] = np.nan
-x_axis2 = 320*np.array(range(0,y.size))/fs
-signalpowerplot=plt.plot(x_axis2,y,color = 'g',alpha=0.4, label="Signal Power")
-
-y=10*np.log10(F_data_smoothed[:,150])
-y[y == 0] = np.nan
-x_axis2 = 320*np.array(range(0,y.size))/fs
-exponential_plot=plt.plot(x_axis2,y,color = 'g',alpha=0.9,  label="PSD Exponential Smoothed")
-
-y=10*np.log10(noisevariance_min[:,150])
-y[y == 0] = np.nan
-x_axis2 = 320*np.array(range(0,y.size))/fs
-noisevarianceplot=plt.plot(x_axis2,y,color = 'b',alpha=0.6, label="Noise Variance (Minimum)")
-
-y=10*np.log10(noisevariance_mmse[:,150])
-y[y == 0] = np.nan
-x_axis2 = 320*np.array(range(0,y.size))/fs
-noisevariance_mmse=plt.plot(x_axis2,y,color = 'r',alpha=0.8,  label="Noise Variance (MMSE)")
-
-
-
-plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
+# y=10*np.log10(psd_F_data[:,150])
+# y[y == 0] = np.nan
+# x_axis2 = 320*np.array(range(0,y.size))/fs
+# signalpowerplot=plt.plot(x_axis2,y,color = 'g',alpha=0.4, label="Signal Power")
+#
+# y=10*np.log10(F_data_smoothed[:,150])
+# y[y == 0] = np.nan
+# x_axis2 = 320*np.array(range(0,y.size))/fs
+# exponential_plot=plt.plot(x_axis2,y,color = 'g',alpha=0.9,  label="PSD Exponential Smoothed")
+#
+# y=10*np.log10(noisevariance_min[:,150])
+# y[y == 0] = np.nan
+# x_axis2 = 320*np.array(range(0,y.size))/fs
+# noisevarianceplot=plt.plot(x_axis2,y,color = 'b',alpha=0.6, label="Noise Variance (Minimum)")
+#
+# y=10*np.log10(noisevariance_mmse[:,150])
+# y[y == 0] = np.nan
+# x_axis2 = 320*np.array(range(0,y.size))/fs
+# noisevariance_mmse=plt.plot(x_axis2,y,color = 'r',alpha=0.8,  label="Noise Variance (MMSE)")
+#
+#
+#
+# plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
 
 
 #
@@ -156,6 +146,6 @@ plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", bo
 # x_axis2 = 320*np.array(range(0,y.size))/fs
 # signalpowerplot=plt.plot(x_axis2,y,color = 'r',alpha=0.5, label="Noise Power")
 
-plt.show()
+#plt.show()
 
 end=1

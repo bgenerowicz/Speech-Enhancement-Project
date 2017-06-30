@@ -208,7 +208,7 @@ def wiener(Py,Pn,y_k):
     gain[np.isnan(gain)] = 0
     s_est=gain*y_k
 
-    return s_est
+    return s_est,gain
 
 def Noise_MMSE(framed_data,fft_data,s_segment):
     num_frames = len(framed_data)
@@ -282,20 +282,23 @@ def exponentialsmoother(psd_F_data,alpha):
 def ml_estimation(bartlett_y,sigma_n):
 
     L = 7
-    k = bartlett_y.shape[1]  # number of freq bins
-    R = bartlett_y.shape[0] # number of frames
-    numcols = copy.copy(k)  # number of columns
-    numrows = copy.copy(R)  # number of rows
+    #k = bartlett_y.shape[1]  # number of freq bins
+    #R = bartlett_y.shape[0] # number of frames
+    numcols = bartlett_y.shape[1]  # number of columns
+    numrows = bartlett_y.shape[0]  # number of rows
 
-    sigma_s_ml = np.empty([R, k])
+    sigma_s_ml = np.empty([numrows, numcols])
 
 
     for rowstart, rowend in zip(range(0, numrows - L, 1), range(L - 1, numrows, 1)):
-        sigma_s_ml[rowend, 0:k + 1] = np.mean(bartlett_y[list(range(rowstart, rowend + 1)), :], axis=0) - sigma_n[rowend,0:k+1]
+        for k in range(0,numcols):
+        #sigma_s_ml[rowend, 0:k + 1] = np.mean(bartlett_y[list(range(rowstart, rowend + 1)), :], axis=0) - sigma_n[rowend,0:k+1]
+            #sigma_s_ml[rowend, k] = np.mean(bartlett_y[list(range(rowstart, rowend + 1)), k], axis=0) - sigma_n[rowend,k]
+            sigma_s_ml[rowstart, k] = bartlett_y[rowstart, k] - sigma_n[rowend, k]
 
     return sigma_s_ml
 
-def dd_approach(sigma_s,sigma_n,bartlett_y,alpha,chi):
+def dd_approach(sigma_s,sigma_n,bartlett_y,alpha):
 
     k = bartlett_y.shape[1]  # number of freq bins
     R = bartlett_y.shape[0] # number of frames
@@ -304,6 +307,18 @@ def dd_approach(sigma_s,sigma_n,bartlett_y,alpha,chi):
 
     for j in range(1, R - 1):
         onevector = np.array(np.ones(k))  # make onevector
-        sigma_s_dd[j,:] = np.maximum( alpha * sigma_s[j-1,:]+ (onevector - alpha) *  (bartlett_y[j,:]-sigma_n[j,:]),chi*sigma_n[j,:])
+        sigma_s_dd[j,:] = np.maximum( alpha * sigma_s[j-1,:]+ (onevector - alpha) *  (bartlett_y[j,:]-sigma_n[j,:]),0.3*sigma_n[j,:])
 
     return sigma_s_dd
+
+# def dd_approach(sigma_s,sigma_n,bartlett_y,alpha):
+#
+#     k = bartlett_y.shape[1]  # number of freq bins
+#     R = bartlett_y.shape[0] # number of frames
+#     sigma_s_dd = np.empty([R, k])
+#
+#     for j in range(1, R - 1):
+#         onevector = np.array(np.ones(k))  # make onevector
+#         sigma_s_dd[j,:] = alpha * sigma_s[j-1,:]/sigma_n[j,1] + (onevector - alpha) * np.maximum( (bartlett_y[j,:]/sigma_n[j,:])-1,0)  # hendricksbook: eq.(6.2)
+#
+#     return sigma_s_dd
